@@ -60,6 +60,30 @@ db.exec(`
     tags        TEXT,                   -- mots-clés séparés par des virgules
     created_at  TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  -- Rapports de bilans sanguins (un rapport = une prise de sang à une date)
+  CREATE TABLE IF NOT EXISTS blood_tests (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    date        TEXT NOT NULL,
+    lab         TEXT,                   -- laboratoire
+    doctor      TEXT,                   -- médecin prescripteur
+    notes       TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  -- Résultats individuels d'un bilan sanguin (un marqueur = une ligne)
+  CREATE TABLE IF NOT EXISTS blood_results (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    blood_test_id INTEGER NOT NULL REFERENCES blood_tests(id) ON DELETE CASCADE,
+    theme         TEXT NOT NULL,        -- foie, cholesterol, thyroide, ...
+    marker        TEXT NOT NULL,        -- ASAT, LDL, TSH, ...
+    value         REAL NOT NULL,
+    unit          TEXT,
+    ref_min       REAL,                 -- borne basse de référence (optionnelle)
+    ref_max       REAL                  -- borne haute de référence (optionnelle)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_blood_results_test ON blood_results(blood_test_id);
 `);
 
 export default db;

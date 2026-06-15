@@ -127,6 +127,20 @@ body {
 .tag-a_venir { background: #fef3c7; color: #92400e; }
 .tag-termine { background: #d1fae5; color: #065f46; }
 .tag-annule { background: #fee2e2; color: #991b1b; }
+
+/* Statuts des résultats de bilans sanguins */
+.status-normal { background: #d1fae5; color: #065f46; }
+.status-bas { background: #dbeafe; color: #1e40af; }
+.status-eleve { background: #fee2e2; color: #991b1b; }
+.badge.status-normal { background: #ecfdf5; color: #065f46; }
+.badge.status-bas { background: #eff6ff; color: #1e40af; }
+.badge.status-eleve { background: #fef2f2; color: #991b1b; }
+
+/* Éditeur de résultats (saisie multi-marqueurs) */
+.results-editor { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+.result-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.result-row input { padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; font-size: 13px; min-width: 0; }
+.result-row input:first-child { flex: 1; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 
 /* Filtres */

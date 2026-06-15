@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import db from './db.js';
 import { crudRouter } from './crud.js';
+import bloodRouter from './blood.js';
 
 const app = express();
 app.use(cors());
@@ -24,6 +25,7 @@ app.use(
   '/api/summaries',
   crudRouter('summaries', ['title', 'date', 'content', 'tags'], 'date DESC')
 );
+app.use('/api/blood', bloodRouter);
 
 // Statistiques pour le tableau de bord
 app.get('/api/stats', (req, res) => {
@@ -41,6 +43,7 @@ app.get('/api/stats', (req, res) => {
       bilans: count('bilans'),
       appointments: count('appointments'),
       summaries: count('summaries'),
+      blood_tests: count('blood_tests'),
     },
     nextAppointment: nextAppointment || null,
     lastBilan: lastBilan || null,

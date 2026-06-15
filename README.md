@@ -10,7 +10,11 @@ le tout dans une interface simple et stockée localement.
 
 - **📈 Suivi de santé** — enregistrement des constantes (poids, tension, glycémie,
   fréquence cardiaque, température, saturation…) avec graphique d'évolution.
-- **🧪 Bilans médicaux** — analyses, imagerie et examens avec résultats et conclusions.
+- **📊 Bilans sanguins** — saisie de rapports de prises de sang à différentes dates, marqueur par
+  marqueur (catalogue prédéfini par thème qui pré-remplit unité et valeurs de référence), avec
+  **résumé par thème** (foie, cholestérol, thyroïde, diabète, NFS, rein, fer, vitamines) : dernière
+  valeur, statut normal/bas/élevé et évolution dans le temps.
+- **🧪 Bilans & examens** — analyses, imagerie et examens en texte libre avec résultats et conclusions.
 - **📅 Rendez-vous** — consultations à venir / passées, avec statut et filtres.
 - **📋 Résumés médicaux** — synthèses, antécédents et traitements, avec mots-clés et recherche.
 - **🏠 Tableau de bord** — vue d'ensemble : compteurs, prochain rendez-vous, dernier bilan, mesures récentes.
@@ -75,6 +79,17 @@ Routes supplémentaires :
 
 - `GET /api/stats` — données du tableau de bord
 - `GET /api/measurements/series/:type` — série temporelle d'un type de mesure (graphique)
+
+Bilans sanguins (`/api/blood`) :
+
+| Méthode | Route | Description |
+|--------|-------|-------------|
+| `GET` | `/api/blood/catalog` | Catalogue des marqueurs par thème (unités + références) |
+| `GET` | `/api/blood/tests` | Liste des rapports avec leurs résultats |
+| `POST` | `/api/blood/tests` | Crée un rapport et ses résultats |
+| `PUT` | `/api/blood/tests/:id` | Met à jour un rapport (remplace les résultats) |
+| `DELETE` | `/api/blood/tests/:id` | Supprime un rapport |
+| `GET` | `/api/blood/summary` | Résumé par thème : évolution, dernière valeur, statut |
 
 ## 🛠️ Stack technique
 

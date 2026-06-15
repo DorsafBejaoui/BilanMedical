@@ -5,7 +5,8 @@ import { formatDate, formatDateTime } from '../helpers.js';
 
 const cards = [
   { key: 'measurements', label: 'Mesures', icon: '📈', to: '/suivi', color: '#3b82f6' },
-  { key: 'bilans', label: 'Bilans', icon: '🧪', to: '/bilans', color: '#10b981' },
+  { key: 'blood_tests', label: 'Bilans sanguins', icon: '📊', to: '/bilans-sanguins', color: '#ec4899' },
+  { key: 'bilans', label: 'Bilans & examens', icon: '🧪', to: '/bilans', color: '#10b981' },
   { key: 'appointments', label: 'Rendez-vous', icon: '📅', to: '/rendez-vous', color: '#f59e0b' },
   { key: 'summaries', label: 'Résumés', icon: '📋', to: '/resumes', color: '#8b5cf6' },
 ];

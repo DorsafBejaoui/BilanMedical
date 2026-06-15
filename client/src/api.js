@@ -21,4 +21,12 @@ export const api = {
   remove: (resource, id) => request(`/${resource}/${id}`, { method: 'DELETE' }),
   stats: () => request('/stats'),
   series: (type) => request(`/measurements/series/${type}`),
+  blood: {
+    catalog: () => request('/blood/catalog'),
+    tests: () => request('/blood/tests'),
+    summary: () => request('/blood/summary'),
+    create: (body) => request('/blood/tests', { method: 'POST', body }),
+    update: (id, body) => request(`/blood/tests/${id}`, { method: 'PUT', body }),
+    remove: (id) => request(`/blood/tests/${id}`, { method: 'DELETE' }),
+  },
 };
