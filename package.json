@@ -1,0 +1,12 @@
+{
+  "name": "bilanmedical",
+  "version": "1.0.0",
+  "description": "Application de suivi de santé : bilans, résumés médicaux et rendez-vous",
+  "private": true,
+  "scripts": {
+    "install:all": "npm --prefix server install && npm --prefix client install",
+    "server": "npm --prefix server start",
+    "client": "npm --prefix client run dev",
+    "dev": "node scripts/dev.js"
+  }
+}
