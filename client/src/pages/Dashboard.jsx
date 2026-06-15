@@ -39,6 +39,21 @@ export default function Dashboard() {
         ))}
       </div>
 
+      {stats.outOfRange?.length > 0 && (
+        <section className="panel alert-panel">
+          <h3>⚠️ Marqueurs hors plage ({stats.outOfRange.length})</h3>
+          <div className="alert-grid">
+            {stats.outOfRange.map((m) => (
+              <Link key={`${m.theme}-${m.marker}`} to="/bilans-sanguins" className={`alert-item status-${m.status}`}>
+                <span className="alert-marker">{m.marker}</span>
+                <span className="alert-value">{m.value} {m.unit || ''}</span>
+                <span className="alert-meta">{m.status === 'eleve' ? 'Élevé' : 'Bas'} · {m.theme}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="dash-columns">
         <section className="panel">
           <h3>📅 Prochain rendez-vous</h3>

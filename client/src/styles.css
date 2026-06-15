@@ -150,6 +150,46 @@ body {
 
 .search { width: 100%; padding: 11px 14px; border: 1px solid var(--border); border-radius: 9px; font-size: 14px; margin-bottom: 18px; }
 
+/* En-tête : groupe de boutons */
+.header-actions { display: flex; gap: 10px; align-items: center; }
+
+/* Barre d'outils du résumé (filtres + export) */
+.summary-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.summary-toolbar select { padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; }
+.search.inline { width: auto; flex: 1; min-width: 180px; margin-bottom: 0; }
+
+/* Bandeau d'information (import) */
+.info-banner { background: #eff6ff; color: #1e40af; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin: 0; }
+
+/* Panneau d'alerte (marqueurs hors plage) */
+.alert-panel { border-left: 4px solid #f59e0b; margin-bottom: 28px; }
+.alert-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.alert-item { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 10px; text-decoration: none; color: var(--text); border: 1px solid var(--border); }
+.alert-item.status-eleve { background: #fef2f2; border-color: #fecaca; }
+.alert-item.status-bas { background: #eff6ff; border-color: #bfdbfe; }
+.alert-marker { font-weight: 600; }
+.alert-value { font-size: 18px; font-weight: 700; }
+.alert-item.status-eleve .alert-value { color: #991b1b; }
+.alert-item.status-bas .alert-value { color: #1e40af; }
+.alert-meta { font-size: 12px; color: var(--muted); }
+
+/* Graphique à zone de référence */
+.refchart { display: block; }
+.refchart .ref-band { fill: rgba(16, 185, 129, 0.14); }
+.refchart .line { stroke: var(--primary); stroke-width: 2; }
+.refchart .dot { fill: var(--primary); }
+.refchart .dot.out { fill: var(--danger); }
+
+/* Impression / export PDF */
+.print-only { display: none; }
+@media print {
+  .sidebar, .no-print, .header-actions { display: none !important; }
+  .app, .content, .page { display: block; margin: 0; padding: 0; max-width: none; }
+  .panel { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+  .print-only { display: block; }
+  .print-title { margin: 0 0 16px; }
+}
+
 /* Graphique */
 .sparkline { width: 100%; height: auto; }
 .sparkline .line { stroke: var(--primary); stroke-width: 2.5; }

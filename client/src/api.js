@@ -28,5 +28,15 @@ export const api = {
     create: (body) => request('/blood/tests', { method: 'POST', body }),
     update: (id, body) => request(`/blood/tests/${id}`, { method: 'PUT', body }),
     remove: (id) => request(`/blood/tests/${id}`, { method: 'DELETE' }),
+    importPdf: async (file) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/blood/import', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const m = await res.json().catch(() => ({}));
+        throw new Error(m.error || `Erreur ${res.status}`);
+      }
+      return res.json();
+    },
   },
 };

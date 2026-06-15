@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import db from './db.js';
 import { crudRouter } from './crud.js';
-import bloodRouter from './blood.js';
+import bloodRouter, { outOfRangeMarkers } from './blood.js';
 
 const app = express();
 app.use(cors());
@@ -48,6 +48,7 @@ app.get('/api/stats', (req, res) => {
     nextAppointment: nextAppointment || null,
     lastBilan: lastBilan || null,
     recentMeasurements,
+    outOfRange: outOfRangeMarkers(),
   });
 });
 

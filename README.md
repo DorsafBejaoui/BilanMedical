@@ -13,7 +13,11 @@ le tout dans une interface simple et stockée localement.
 - **📊 Bilans sanguins** — saisie de rapports de prises de sang à différentes dates, marqueur par
   marqueur (catalogue prédéfini par thème qui pré-remplit unité et valeurs de référence), avec
   **résumé par thème** (foie, cholestérol, thyroïde, diabète, NFS, rein, fer, vitamines) : dernière
-  valeur, statut normal/bas/élevé et évolution dans le temps.
+  valeur, statut normal/bas/élevé et évolution dans le temps. Comprend :
+  - **Import PDF** de comptes-rendus de laboratoire avec extraction automatique des valeurs (à valider).
+  - **Filtres** du résumé par thème et par marqueur, et **export PDF** du résumé (impression navigateur).
+  - **Graphique** d'évolution avec **zone de référence ombrée** (points hors plage en rouge).
+  - Mise en avant des **marqueurs hors plage** sur le tableau de bord.
 - **🧪 Bilans & examens** — analyses, imagerie et examens en texte libre avec résultats et conclusions.
 - **📅 Rendez-vous** — consultations à venir / passées, avec statut et filtres.
 - **📋 Résumés médicaux** — synthèses, antécédents et traitements, avec mots-clés et recherche.
@@ -90,6 +94,7 @@ Bilans sanguins (`/api/blood`) :
 | `PUT` | `/api/blood/tests/:id` | Met à jour un rapport (remplace les résultats) |
 | `DELETE` | `/api/blood/tests/:id` | Supprime un rapport |
 | `GET` | `/api/blood/summary` | Résumé par thème : évolution, dernière valeur, statut |
+| `POST` | `/api/blood/import` | Import d'un PDF de labo (multipart `file`) → brouillon détecté |
 
 ## 🛠️ Stack technique
 

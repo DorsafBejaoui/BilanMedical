@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { formatDate, nowLocal } from '../helpers.js';
 import Modal from '../components/Modal.jsx';
-import Sparkline from '../components/Sparkline.jsx';
+import RefChart from '../components/RefChart.jsx';
 
 const STATUS_LABEL = { normal: 'Normal', bas: 'Bas', eleve: 'Élevé' };
 const TREND_ICON = { '-1': '↓', 1: '↑', 0: '→' };
@@ -26,6 +26,12 @@ export default function BilansSanguins() {
   const [form, setForm] = useState(emptyForm());
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState(null);
+  const [info, setInfo] = useState(null);
+  const [importing, setImporting] = useState(false);
+  // Filtres du résumé
+  const [themeFilter, setThemeFilter] = useState('tous');
+  const [markerQuery, setMarkerQuery] = useState('');
+  const fileRef = useRef(null);
 
   const load = () => {
     api.blood.tests().then(setTests).catch((e) => setError(e.message));
@@ -36,18 +42,16 @@ export default function BilansSanguins() {
     load();
   }, []);
 
-  // Index marqueur -> {theme, unit, min, max} pour l'auto-remplissage
   const markerIndex = useMemo(() => {
     const idx = {};
     for (const t of catalog) for (const m of t.markers) idx[m.name] = { theme: t.theme, ...m };
     return idx;
   }, [catalog]);
 
-  const openNew = () => { setForm(emptyForm()); setEditId(null); setError(null); setOpen(true); };
+  const openNew = () => { setForm(emptyForm()); setEditId(null); setError(null); setInfo(null); setOpen(true); };
   const openEdit = (t) => {
     setForm({
-      date: t.date,
-      lab: t.lab || '', doctor: t.doctor || '', notes: t.notes || '',
+      date: t.date, lab: t.lab || '', doctor: t.doctor || '', notes: t.notes || '',
       results: t.results.length
         ? t.results.map((r) => ({
             theme: r.theme, marker: r.marker, value: r.value,
@@ -55,9 +59,7 @@ export default function BilansSanguins() {
           }))
         : [emptyRow()],
     });
-    setEditId(t.id);
-    setError(null);
-    setOpen(true);
+    setEditId(t.id); setError(null); setInfo(null); setOpen(true);
   };
 
   const setRow = (i, patch) =>
@@ -65,14 +67,8 @@ export default function BilansSanguins() {
 
   const onPickMarker = (i, name) => {
     const def = markerIndex[name];
-    if (def) {
-      setRow(i, {
-        marker: name, theme: def.theme, unit: def.unit,
-        ref_min: def.min ?? '', ref_max: def.max ?? '',
-      });
-    } else {
-      setRow(i, { marker: name });
-    }
+    if (def) setRow(i, { marker: name, theme: def.theme, unit: def.unit, ref_min: def.min ?? '', ref_max: def.max ?? '' });
+    else setRow(i, { marker: name });
   };
 
   const addRow = () => setForm((f) => ({ ...f, results: [...f.results, emptyRow()] }));
@@ -80,10 +76,7 @@ export default function BilansSanguins() {
 
   const submit = async (e) => {
     e.preventDefault();
-    const payload = {
-      ...form,
-      results: form.results.filter((r) => r.marker && r.value !== ''),
-    };
+    const payload = { ...form, results: form.results.filter((r) => r.marker && r.value !== '') };
     try {
       if (editId) await api.blood.update(editId, payload);
       else await api.blood.create(payload);
@@ -98,19 +91,67 @@ export default function BilansSanguins() {
     load();
   };
 
+  // Import d'un PDF de laboratoire
+  const onImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // permet de réimporter le même fichier
+    if (!file) return;
+    setImporting(true);
+    setError(null);
+    try {
+      const draft = await api.blood.importPdf(file);
+      setForm({
+        date: draft.date || nowLocal(), lab: '', doctor: '',
+        notes: `Importé depuis ${draft.source || 'PDF'}`,
+        results: draft.results.length
+          ? draft.results.map((r) => ({
+              theme: r.theme, marker: r.marker, value: r.value,
+              unit: r.unit || '', ref_min: r.ref_min ?? '', ref_max: r.ref_max ?? '',
+            }))
+          : [emptyRow()],
+      });
+      setEditId(null);
+      setInfo(
+        draft.results.length
+          ? `${draft.results.length} marqueur(s) détecté(s). Vérifiez les valeurs avant d'enregistrer.`
+          : "Aucun marqueur reconnu automatiquement. Saisissez-les manuellement."
+      );
+      setOpen(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Résumé filtré
+  const filteredSummary = useMemo(() => {
+    const q = markerQuery.trim().toLowerCase();
+    return summary
+      .filter((g) => themeFilter === 'tous' || g.theme === themeFilter)
+      .map((g) => ({ ...g, markers: g.markers.filter((m) => !q || m.marker.toLowerCase().includes(q)) }))
+      .filter((g) => g.markers.length > 0);
+  }, [summary, themeFilter, markerQuery]);
+
   return (
     <div className="page">
-      <header className="page-header">
+      <header className="page-header no-print">
         <div>
           <h2>📊 Bilans sanguins</h2>
           <p className="muted">Saisissez vos prises de sang et suivez chaque marqueur par thème</p>
         </div>
-        <button className="btn" onClick={openNew}>+ Nouveau rapport</button>
+        <div className="header-actions">
+          <input ref={fileRef} type="file" accept="application/pdf" hidden onChange={onImportFile} />
+          <button className="btn ghost" disabled={importing} onClick={() => fileRef.current?.click()}>
+            {importing ? '⏳ Lecture…' : '📄 Importer un PDF'}
+          </button>
+          <button className="btn" onClick={openNew}>+ Nouveau rapport</button>
+        </div>
       </header>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error no-print">{error}</p>}
 
-      <div className="filters">
+      <div className="filters no-print">
         <button className={`chip ${view === 'resume' ? 'active' : ''}`} onClick={() => setView('resume')}>
           Résumé par thème
         </button>
@@ -120,41 +161,57 @@ export default function BilansSanguins() {
       </div>
 
       {view === 'resume' && (
-        summary.length === 0 ? (
-          <p className="muted">Aucun résultat. Ajoutez un rapport de bilan sanguin pour générer le résumé.</p>
-        ) : (
-          summary.map((group) => (
-            <section key={group.theme} className="panel">
-              <h3>{group.theme}</h3>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Marqueur</th><th>Dernière valeur</th><th>Statut</th>
-                    <th>Référence</th><th>Évolution</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {group.markers.map((m) => (
-                    <tr key={m.marker}>
-                      <td>{m.marker}</td>
-                      <td>
-                        <strong>{m.last.value}</strong> {m.unit || ''}{' '}
-                        <span className="muted">{TREND_ICON[m.trend]}</span>
-                        <div className="muted" style={{ fontSize: 12 }}>{formatDate(m.last.date)}</div>
-                      </td>
-                      <td><span className={`tag status-${m.status}`}>{STATUS_LABEL[m.status]}</span></td>
-                      <td className="muted">{refLabel(m.ref_min, m.ref_max)} {m.unit || ''}</td>
-                      <td style={{ minWidth: 160 }}>
-                        <Sparkline data={m.history.map((h, i) => ({ id: i, value: h.value, measured_at: h.date, unit: m.unit }))}
-                          width={200} height={56} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
-          ))
-        )
+        <>
+          <div className="summary-toolbar no-print">
+            <select value={themeFilter} onChange={(e) => setThemeFilter(e.target.value)}>
+              <option value="tous">Tous les thèmes</option>
+              {summary.map((g) => <option key={g.theme} value={g.theme}>{g.theme}</option>)}
+            </select>
+            <input className="search inline" placeholder="🔍 Filtrer un marqueur…" value={markerQuery}
+              onChange={(e) => setMarkerQuery(e.target.value)} />
+            <button className="btn ghost" onClick={() => window.print()} disabled={filteredSummary.length === 0}>
+              ⬇️ Exporter en PDF
+            </button>
+          </div>
+
+          <div className="printable">
+            <h2 className="print-only print-title">Résumé des bilans sanguins</h2>
+            {filteredSummary.length === 0 ? (
+              <p className="muted">Aucun résultat à afficher. Importez un PDF ou ajoutez un rapport.</p>
+            ) : (
+              filteredSummary.map((group) => (
+                <section key={group.theme} className="panel">
+                  <h3>{group.theme}</h3>
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Marqueur</th><th>Dernière valeur</th><th>Statut</th>
+                        <th>Référence</th><th>Évolution</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.markers.map((m) => (
+                        <tr key={m.marker}>
+                          <td>{m.marker}</td>
+                          <td>
+                            <strong>{m.last.value}</strong> {m.unit || ''}{' '}
+                            <span className="muted">{TREND_ICON[m.trend]}</span>
+                            <div className="muted" style={{ fontSize: 12 }}>{formatDate(m.last.date)}</div>
+                          </td>
+                          <td><span className={`tag status-${m.status}`}>{STATUS_LABEL[m.status]}</span></td>
+                          <td className="muted">{refLabel(m.ref_min, m.ref_max)} {m.unit || ''}</td>
+                          <td style={{ minWidth: 180 }}>
+                            <RefChart data={m.history} refMin={m.ref_min} refMax={m.ref_max} unit={m.unit} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </section>
+              ))
+            )}
+          </div>
+        </>
       )}
 
       {view === 'rapports' && (
@@ -208,6 +265,7 @@ export default function BilansSanguins() {
       {open && (
         <Modal title={editId ? 'Modifier le rapport' : 'Nouveau rapport de bilan sanguin'} onClose={() => setOpen(false)}>
           <form onSubmit={submit} className="form">
+            {info && <p className="info-banner">{info}</p>}
             <div className="form-row">
               <label>
                 Date du prélèvement
