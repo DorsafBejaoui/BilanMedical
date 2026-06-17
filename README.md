@@ -12,7 +12,8 @@ le tout dans une interface simple et stockée localement.
   fréquence cardiaque, température, saturation…) avec graphique d'évolution.
 - **📊 Bilans sanguins** — saisie de rapports de prises de sang à différentes dates, marqueur par
   marqueur (catalogue prédéfini par thème qui pré-remplit unité et valeurs de référence), avec
-  **résumé par thème** (foie, cholestérol, thyroïde, diabète, NFS, rein, fer, vitamines) : dernière
+  **résumé par thème** (14 thèmes : foie, lipides, thyroïde, diabète, NFS, ionogramme, rein, fer,
+  vitamines, inflammation, protéines, pancréas, coagulation, cœur/muscle — 60+ marqueurs) : dernière
   valeur, statut normal/bas/élevé et évolution dans le temps. Comprend :
   - **Import PDF** de comptes-rendus de laboratoire avec extraction automatique des valeurs (à valider).
   - **Filtres** du résumé par thème et par marqueur, et **export PDF** du résumé (impression navigateur).

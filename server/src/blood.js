@@ -110,41 +110,63 @@ const normalize = (s) =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 // Génère des variantes de nom : "ASAT (TGO)" -> ["ASAT (TGO)", "ASAT", "TGO"]
-function aliasesFor(name) {
+function aliasesFor(marker) {
+  const name = marker.name;
   const set = new Set([name]);
   const before = name.split('(')[0].trim();
   if (before.length >= 2) set.add(before);
   const inside = name.match(/\(([^)]+)\)/);
   if (inside && inside[1].trim().length >= 2) set.add(inside[1].trim());
-  return [...set];
+  for (const a of marker.aliases || []) if (a && a.trim().length >= 2) set.add(a.trim());
+  // Alias les plus longs d'abord : on privilégie une correspondance précise
+  return [...set].sort((a, b) => b.length - a.length);
 }
 
 function extractFromText(text) {
   const flat = text.replace(/ /g, ' ');
-  const norm = normalize(flat);
-
   // Date du prélèvement (premier format jj/mm/aaaa rencontré)
   let date = null;
   const dm = flat.match(/(\d{2})[\/.\-](\d{2})[\/.\-](\d{4})/);
   if (dm) date = `${dm[3]}-${dm[2]}-${dm[1]}`;
 
+  // Liste à plat des marqueurs, triés par longueur d'alias décroissante :
+  // les noms les plus spécifiques (ex : « hémoglobine glyquée ») sont traités
+  // avant les plus courts (ex : « hémoglobine ») pour éviter les collisions.
+  const all = [];
+  for (const theme of CATALOG) {
+    for (const marker of theme.markers) {
+      const aliases = aliasesFor(marker);
+      all.push({ theme: theme.theme, marker, aliases, maxLen: aliases[0]?.length || 0 });
+    }
+  }
+  all.sort((a, b) => b.maxLen - a.maxLen);
+
+  // Texte de travail : chaque correspondance trouvée est « masquée » pour
+  // qu'un marqueur au nom plus court ne réutilise pas la même valeur.
+  let work = normalize(flat);
+  const found = new Map();
+  for (const { theme, marker, aliases } of all) {
+    for (const alias of aliases) {
+      const esc = normalize(alias).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`\\b${esc}\\b[^\\n\\d]{0,40}?(\\d+(?:[.,]\\d+)?)`);
+      const mm = work.match(re);
+      if (mm) {
+        found.set(marker.name, {
+          theme, marker: marker.name, value: parseFloat(mm[1].replace(',', '.')),
+          unit: marker.unit, ref_min: marker.min, ref_max: marker.max,
+        });
+        // Masque la portion reconnue (nom + valeur)
+        work = work.slice(0, mm.index) + ' '.repeat(mm[0].length) + work.slice(mm.index + mm[0].length);
+        break;
+      }
+    }
+  }
+
+  // Restitue les résultats dans l'ordre du catalogue
   const results = [];
   for (const theme of CATALOG) {
     for (const marker of theme.markers) {
-      let value = null;
-      for (const alias of aliasesFor(marker.name)) {
-        const esc = normalize(alias).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // alias (en mot entier) suivi d'un peu de texte puis d'un nombre
-        const re = new RegExp(`\\b${esc}\\b[^\\n\\d]{0,40}?(\\d+(?:[.,]\\d+)?)`);
-        const mm = norm.match(re);
-        if (mm) { value = parseFloat(mm[1].replace(',', '.')); break; }
-      }
-      if (value != null) {
-        results.push({
-          theme: theme.theme, marker: marker.name, value,
-          unit: marker.unit, ref_min: marker.min, ref_max: marker.max,
-        });
-      }
+      if (found.has(marker.name)) results.push(found.get(marker.name));
     }
   }
   return { date, results };
