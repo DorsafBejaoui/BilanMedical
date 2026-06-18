@@ -122,6 +122,21 @@ function aliasesFor(marker) {
   return [...set].sort((a, b) => b.length - a.length);
 }
 
+const toNum = (s) => parseFloat(s.replace(',', '.'));
+
+// Lit un intervalle de référence dans un fragment de texte (normalisé) situé
+// après la valeur d'un marqueur. Gère : "0.40 - 4.00", "0,40 a 4,00",
+// "< 5", "inf a 5", "> 0.4", "sup a 0.4". Renvoie {ref_min, ref_max} ou null.
+function parseRef(seg) {
+  let m = seg.match(/(\d+(?:[.,]\d+)?)\s*(?:-|–|a)\s*(\d+(?:[.,]\d+)?)/);
+  if (m) return { ref_min: toNum(m[1]), ref_max: toNum(m[2]) };
+  m = seg.match(/(?:<|inf(?:erieur)?\.?\s*a?)\s*(\d+(?:[.,]\d+)?)/);
+  if (m) return { ref_min: null, ref_max: toNum(m[1]) };
+  m = seg.match(/(?:>|sup(?:erieur)?\.?\s*a?)\s*(\d+(?:[.,]\d+)?)/);
+  if (m) return { ref_min: toNum(m[1]), ref_max: null };
+  return null;
+}
+
 function extractFromText(text) {
   const flat = text.replace(/ /g, ' ');
   // Date du prélèvement (premier format jj/mm/aaaa rencontré)
@@ -151,12 +166,22 @@ function extractFromText(text) {
       const re = new RegExp(`\\b${esc}\\b[^\\n\\d]{0,40}?(\\d+(?:[.,]\\d+)?)`);
       const mm = work.match(re);
       if (mm) {
+        const valueEnd = mm.index + mm[0].length;
+        // Texte restant sur la même ligne après la valeur (unité + référence)
+        const nl = work.indexOf('\n', valueEnd);
+        const tailEnd = Math.min(nl === -1 ? work.length : nl, valueEnd + 40);
+        const tail = work.slice(valueEnd, tailEnd);
+        const ref = parseRef(tail); // référence imprimée sur le bilan
         found.set(marker.name, {
           theme, marker: marker.name, value: parseFloat(mm[1].replace(',', '.')),
-          unit: marker.unit, ref_min: marker.min, ref_max: marker.max,
+          unit: marker.unit,
+          // Référence du PDF si présente, sinon repli sur le catalogue
+          ref_min: ref ? ref.ref_min : marker.min,
+          ref_max: ref ? ref.ref_max : marker.max,
         });
-        // Masque la portion reconnue (nom + valeur)
-        work = work.slice(0, mm.index) + ' '.repeat(mm[0].length) + work.slice(mm.index + mm[0].length);
+        // Masque la portion reconnue (nom + valeur + référence) pour éviter
+        // qu'un autre marqueur ne réutilise ces nombres.
+        work = work.slice(0, mm.index) + ' '.repeat(tailEnd - mm.index) + work.slice(tailEnd);
         break;
       }
     }

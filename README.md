@@ -15,7 +15,9 @@ le tout dans une interface simple et stockée localement.
   **résumé par thème** (14 thèmes : foie, lipides, thyroïde, diabète, NFS, ionogramme, rein, fer,
   vitamines, inflammation, protéines, pancréas, coagulation, cœur/muscle — 60+ marqueurs) : dernière
   valeur, statut normal/bas/élevé et évolution dans le temps. Comprend :
-  - **Import PDF** de comptes-rendus de laboratoire avec extraction automatique des valeurs (à valider).
+  - **Import PDF** de comptes-rendus de laboratoire avec extraction automatique des valeurs **et des
+    intervalles de référence imprimés sur le bilan** (formats `0,40 - 4,00`, `< 5`, `> 0,4`, `30 à 300`…) ;
+    le catalogue ne sert que de repli quand le PDF n'indique pas de référence. Valeurs à valider avant enregistrement.
   - **Filtres** du résumé par thème et par marqueur, et **export PDF** du résumé (impression navigateur).
   - **Graphique** d'évolution avec **zone de référence ombrée** (points hors plage en rouge).
   - Mise en avant des **marqueurs hors plage** sur le tableau de bord.
