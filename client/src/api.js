@@ -24,6 +24,11 @@ export const api = {
   profile: {
     get: () => request('/profile'),
     update: (body) => request('/profile', { method: 'PUT', body }),
+    activities: {
+      list: () => request('/profile/activities'),
+      add: (body) => request('/profile/activities', { method: 'POST', body }),
+      remove: (id) => request(`/profile/activities/${id}`, { method: 'DELETE' }),
+    },
   },
   synthesis: () => request('/synthesis'),
   blood: {

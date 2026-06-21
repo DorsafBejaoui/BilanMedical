@@ -6,12 +6,109 @@ const ACTIVITY_TYPES = [
   'Marche rapide', 'Course à pied', 'Vélo', 'Natation', 'Musculation', 'Yoga / Pilates',
   'Randonnée', 'Danse', 'Sports collectifs', 'Autre',
 ];
+const FREQUENCIES = [
+  '1 fois/semaine', '2 fois/semaine', '3 fois/semaine', '4 fois/semaine',
+  '5 fois/semaine ou plus', 'Occasionnellement', "Pas d'activité régulière",
+];
+const DURATIONS = ['Moins de 30 min', '30 min', '45 min', '1 h', '1 h 30', '2 h ou plus'];
+
+const emptyActivity = () => ({ activity_type: '', frequency: '', duration: '' });
 
 const empty = {
   sex: '', birth_date: '', height_cm: '', weight_kg: '', smoker: 0,
   family_history: '', notes: '', last_mammography: '', last_cervical: '', last_colorectal: '',
-  activity_type: '', activity_frequency: '', activity_duration: '',
 };
+
+function ActivitySection() {
+  const [activities, setActivities] = useState([]);
+  const [newAct, setNewAct] = useState(emptyActivity());
+  const [adding, setAdding] = useState(false);
+  const [err, setErr] = useState(null);
+
+  const load = () => api.profile.activities.list().then(setActivities).catch((e) => setErr(e.message));
+  useEffect(() => { load(); }, []);
+
+  const setField = (k, v) => setNewAct((a) => ({ ...a, [k]: v }));
+
+  const add = async () => {
+    if (!newAct.activity_type) return;
+    try {
+      await api.profile.activities.add(newAct);
+      setNewAct(emptyActivity());
+      setAdding(false);
+      load();
+    } catch (e) { setErr(e.message); }
+  };
+
+  const remove = async (id) => {
+    await api.profile.activities.remove(id);
+    load();
+  };
+
+  return (
+    <fieldset className="fieldset">
+      <legend>Activité physique</legend>
+      <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
+        Renseignez vos activités pour personnaliser les conseils dans la synthèse santé.
+      </p>
+      {err && <p className="error">{err}</p>}
+
+      {activities.length > 0 && (
+        <ul className="activity-list">
+          {activities.map((a) => (
+            <li key={a.id} className="activity-item">
+              <span className="activity-icon">🏃</span>
+              <span className="activity-name">{a.activity_type}</span>
+              {a.frequency && <span className="tag">{a.frequency}</span>}
+              {a.duration && <span className="tag">{a.duration}</span>}
+              <button type="button" className="icon-btn danger" onClick={() => remove(a.id)}>🗑</button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {adding ? (
+        <div className="activity-add-form">
+          <div className="form-row">
+            <label>
+              Type
+              <select value={newAct.activity_type} onChange={(e) => setField('activity_type', e.target.value)}>
+                <option value="">— Sélectionner —</option>
+                {ACTIVITY_TYPES.map((t) => <option key={t}>{t}</option>)}
+              </select>
+            </label>
+            <label>
+              Fréquence
+              <select value={newAct.frequency} onChange={(e) => setField('frequency', e.target.value)}>
+                <option value="">— Sélectionner —</option>
+                {FREQUENCIES.map((f) => <option key={f}>{f}</option>)}
+              </select>
+            </label>
+            <label>
+              Durée/séance
+              <select value={newAct.duration} onChange={(e) => setField('duration', e.target.value)}>
+                <option value="">— Sélectionner —</option>
+                {DURATIONS.map((d) => <option key={d}>{d}</option>)}
+              </select>
+            </label>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+            <button type="button" className="btn" onClick={add} disabled={!newAct.activity_type}>
+              Ajouter
+            </button>
+            <button type="button" className="btn ghost" onClick={() => { setAdding(false); setNewAct(emptyActivity()); }}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button type="button" className="btn ghost" style={{ marginTop: 6 }} onClick={() => setAdding(true)}>
+          + Ajouter une activité
+        </button>
+      )}
+    </fieldset>
+  );
+}
 
 export default function Profil() {
   const [form, setForm] = useState(empty);
@@ -85,46 +182,7 @@ export default function Profil() {
             value={form.family_history} onChange={(e) => set('family_history', e.target.value)} />
         </label>
 
-        <fieldset className="fieldset">
-          <legend>Activité physique</legend>
-          <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
-            Utilisé pour personnaliser les conseils dans la synthèse santé.
-          </p>
-          <div className="form-row">
-            <label>
-              Type d'activité
-              <select value={form.activity_type} onChange={(e) => set('activity_type', e.target.value)}>
-                <option value="">— Sélectionner —</option>
-                {ACTIVITY_TYPES.map((t) => <option key={t}>{t}</option>)}
-              </select>
-            </label>
-            <label>
-              Fréquence
-              <select value={form.activity_frequency} onChange={(e) => set('activity_frequency', e.target.value)}>
-                <option value="">— Sélectionner —</option>
-                <option>1 fois/semaine</option>
-                <option>2 fois/semaine</option>
-                <option>3 fois/semaine</option>
-                <option>4 fois/semaine</option>
-                <option>5 fois/semaine ou plus</option>
-                <option>Occasionnellement</option>
-                <option>Pas d'activité régulière</option>
-              </select>
-            </label>
-            <label>
-              Durée par séance
-              <select value={form.activity_duration} onChange={(e) => set('activity_duration', e.target.value)}>
-                <option value="">— Sélectionner —</option>
-                <option>Moins de 30 min</option>
-                <option>30 min</option>
-                <option>45 min</option>
-                <option>1 h</option>
-                <option>1 h 30</option>
-                <option>2 h ou plus</option>
-              </select>
-            </label>
-          </div>
-        </fieldset>
+        <ActivitySection />
 
         <fieldset className="fieldset">
           <legend>Derniers dépistages (facultatif)</legend>

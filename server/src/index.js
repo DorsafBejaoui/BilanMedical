@@ -88,12 +88,31 @@ app.put('/api/profile', (req, res) => {
 // Synthèse santé : profil + dépistages + marqueurs hors plage
 app.get('/api/synthesis', (req, res) => {
   const profile = db.prepare('SELECT * FROM profile WHERE id = 1').get();
-  // Complète le poids depuis la dernière mesure si non renseigné dans le profil
   if (!profile.weight_kg) {
     const w = db.prepare(`SELECT value FROM measurements WHERE type = 'poids' ORDER BY measured_at DESC LIMIT 1`).get();
     if (w) profile.weight_kg = w.value;
   }
+  profile.activities = db.prepare('SELECT * FROM profile_activities ORDER BY created_at ASC').all();
   res.json(buildSynthesis(profile, outOfRangeMarkers()));
+});
+
+// Activités physiques (liste, ajout, suppression)
+app.get('/api/profile/activities', (req, res) => {
+  res.json(db.prepare('SELECT * FROM profile_activities ORDER BY created_at ASC').all());
+});
+
+app.post('/api/profile/activities', (req, res) => {
+  const { activity_type, frequency, duration } = req.body;
+  if (!activity_type) return res.status(400).json({ error: 'Type requis' });
+  const r = db.prepare(
+    'INSERT INTO profile_activities (activity_type, frequency, duration) VALUES (?, ?, ?)'
+  ).run(activity_type, frequency || null, duration || null);
+  res.status(201).json(db.prepare('SELECT * FROM profile_activities WHERE id = ?').get(r.lastInsertRowid));
+});
+
+app.delete('/api/profile/activities/:id', (req, res) => {
+  db.prepare('DELETE FROM profile_activities WHERE id = ?').run(req.params.id);
+  res.status(204).end();
 });
 
 // Rapports de radiologie

@@ -116,14 +116,17 @@ function buildGeneralAdvice(profile, age, bmi) {
     advice.push({ level: 'info', icon: '⚖️', text: `IMC ${bmi.bmi} (${bmi.category}). ${bmi.advice}` });
   }
   // Conseil activité physique (personnalisé si renseigné)
-  if (profile.activity_type || profile.activity_frequency || profile.activity_duration) {
-    const parts = [];
-    if (profile.activity_type) parts.push(profile.activity_type);
-    if (profile.activity_frequency) parts.push(profile.activity_frequency);
-    if (profile.activity_duration) parts.push(`${profile.activity_duration} par séance`);
-    advice.push({ level: 'info', icon: '🏃', text: `Activité physique déclarée : ${parts.join(' · ')}. Continuez sur cette lancée — l'OMS recommande 150 min/semaine d'activité modérée.` });
+  const acts = Array.isArray(profile.activities) ? profile.activities : [];
+  if (acts.length > 0) {
+    const summary = acts.map((a) => {
+      const parts = [a.activity_type];
+      if (a.frequency) parts.push(a.frequency);
+      if (a.duration) parts.push(`${a.duration}/séance`);
+      return parts.join(' · ');
+    }).join(' ; ');
+    advice.push({ level: 'info', icon: '🏃', text: `Activités déclarées : ${summary}. Continuez sur cette lancée — l'OMS recommande 150 min/semaine d'activité modérée.` });
   } else {
-    advice.push({ level: 'info', icon: '🏃', text: "Visez au moins 150 min d'activité physique modérée par semaine (marche rapide, vélo, natation…). Renseignez votre activité dans le profil pour un suivi personnalisé." });
+    advice.push({ level: 'info', icon: '🏃', text: "Visez au moins 150 min d'activité physique modérée par semaine (marche rapide, vélo, natation…). Renseignez vos activités dans le profil pour un suivi personnalisé." });
   }
   // Bilan lipidique selon âge/sexe
   if ((profile.sex === 'M' && age != null && age >= 40) || (profile.sex === 'F' && age != null && age >= 50)) {

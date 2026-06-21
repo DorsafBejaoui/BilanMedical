@@ -125,4 +125,15 @@ for (const col of ['activity_type TEXT', 'activity_frequency TEXT', 'activity_du
   try { db.exec(`ALTER TABLE profile ADD COLUMN ${col}`); } catch { /* déjà existante */ }
 }
 
+db.exec(`
+  -- Activités physiques (plusieurs par profil)
+  CREATE TABLE IF NOT EXISTS profile_activities (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    activity_type TEXT NOT NULL,
+    frequency  TEXT,
+    duration   TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+`);
+
 export default db;
