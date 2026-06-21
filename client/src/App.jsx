@@ -24,7 +24,7 @@ export default function App() {
         <div className="brand">
           <span className="brand-icon">🩺</span>
           <div>
-            <h1>BilanMedical</h1>
+            <h1>Suivi Ma Santé</h1>
             <p>Mon carnet de santé</p>
           </div>
         </div>
