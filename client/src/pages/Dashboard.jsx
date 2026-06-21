@@ -45,12 +45,24 @@ export default function Dashboard() {
           <div className="alert-grid">
             {stats.outOfRange.map((m) => (
               <Link key={`${m.theme}-${m.marker}`} to="/bilans-sanguins" className={`alert-item status-${m.status}`}>
+                {m.insight && (
+                  <span className={`insight insight-${m.insight.level}`}>
+                    <span className="insight-icon">{m.insight.level === 'urgent' ? '🚨' : '💡'}</span>
+                    {m.insight.message}
+                  </span>
+                )}
                 <span className="alert-marker">{m.marker}</span>
                 <span className="alert-value">{m.value} {m.unit || ''}</span>
-                <span className="alert-meta">{m.status === 'eleve' ? 'Élevé' : 'Bas'} · {m.theme}</span>
+                <span className="alert-meta">
+                  {m.status === 'eleve' ? 'Élevé' : 'Bas'} · réf. {m.ref_min ?? '—'}–{m.ref_max ?? '—'} · {m.theme}
+                </span>
               </Link>
             ))}
           </div>
+          <p className="disclaimer">
+            ℹ️ Recommandations à titre informatif, fondées sur des repères médicaux généraux.
+            Elles ne remplacent pas l'avis de votre médecin.
+          </p>
         </section>
       )}
 

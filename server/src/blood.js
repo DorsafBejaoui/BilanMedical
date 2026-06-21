@@ -3,6 +3,7 @@ import multer from 'multer';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import db from './db.js';
 import { CATALOG } from './catalog.js';
+import { getInsight } from './insights.js';
 
 const router = Router();
 const upload = multer({
@@ -100,6 +101,7 @@ export function outOfRangeMarkers() {
         status: m.status,
         ref_min: m.ref_min,
         ref_max: m.ref_max,
+        insight: getInsight(m.marker, m.status),
       }))
   );
 }

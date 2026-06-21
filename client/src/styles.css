@@ -173,6 +173,14 @@ body {
 .alert-item.status-bas .alert-value { color: #1e40af; }
 .alert-meta { font-size: 12px; color: var(--muted); }
 
+/* Recommandation (insight) affichée au-dessus de la valeur */
+.insight { display: block; font-size: 12px; line-height: 1.45; padding: 8px 10px; border-radius: 8px; margin-bottom: 8px; font-weight: 400; }
+.insight-icon { margin-right: 4px; }
+.insight-info { background: #eff6ff; color: #1e3a8a; }
+.insight-warn { background: #fffbeb; color: #92400e; }
+.insight-urgent { background: #fef2f2; color: #991b1b; font-weight: 600; }
+.disclaimer { font-size: 12px; color: var(--muted); margin: 14px 0 0; font-style: italic; }
+
 /* Graphique à zone de référence */
 .refchart { display: block; }
 .refchart .ref-band { fill: rgba(16, 185, 129, 0.14); }
