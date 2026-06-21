@@ -24,7 +24,13 @@ le tout dans une interface simple et stockée localement.
 - **🧪 Bilans & examens** — analyses, imagerie et examens en texte libre avec résultats et conclusions.
 - **📅 Rendez-vous** — consultations à venir / passées, avec statut et filtres.
 - **📋 Résumés médicaux** — synthèses, antécédents et traitements, avec mots-clés et recherche.
-- **🏠 Tableau de bord** — vue d'ensemble : compteurs, prochain rendez-vous, dernier bilan, mesures récentes.
+- **👤 Profil** — sexe, date de naissance (âge), taille/poids (IMC), tabac, antécédents et dates des
+  derniers dépistages.
+- **🧠 Synthèse santé** — analyse personnalisée croisant le profil et les bilans : **calendrier des
+  dépistages** (mammographie, frottis/HPV, colorectal… avec date du prochain examen selon les repères HAS),
+  IMC, points d'attention biologiques et conseils personnalisés.
+- **🏠 Tableau de bord** — vue d'ensemble : compteurs, prochain rendez-vous, dernier bilan, mesures récentes,
+  marqueurs hors plage avec recommandations.
 
 ## 🏗️ Architecture
 

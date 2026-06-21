@@ -3,6 +3,7 @@ import cors from 'cors';
 import db from './db.js';
 import { crudRouter } from './crud.js';
 import bloodRouter, { outOfRangeMarkers } from './blood.js';
+import { buildSynthesis } from './synthesis.js';
 
 const app = express();
 app.use(cors());
@@ -58,6 +59,38 @@ app.get('/api/measurements/series/:type', (req, res) => {
     .prepare(`SELECT id, value, value2, unit, measured_at FROM measurements WHERE type = ? ORDER BY measured_at ASC`)
     .all(req.params.type);
   res.json(rows);
+});
+
+// Profil de l'utilisateur (ligne unique)
+const PROFILE_FIELDS = ['sex', 'birth_date', 'height_cm', 'weight_kg', 'smoker', 'family_history', 'notes', 'last_mammography', 'last_cervical', 'last_colorectal'];
+
+app.get('/api/profile', (req, res) => {
+  res.json(db.prepare('SELECT * FROM profile WHERE id = 1').get());
+});
+
+app.put('/api/profile', (req, res) => {
+  const data = {};
+  for (const f of PROFILE_FIELDS) {
+    if (req.body[f] !== undefined) data[f] = req.body[f] === '' ? null : req.body[f];
+  }
+  if (data.smoker !== undefined) data.smoker = data.smoker ? 1 : 0;
+  const cols = Object.keys(data);
+  if (cols.length) {
+    db.prepare(`UPDATE profile SET ${cols.map((c) => `${c} = ?`).join(', ')} WHERE id = 1`)
+      .run(...cols.map((c) => data[c]));
+  }
+  res.json(db.prepare('SELECT * FROM profile WHERE id = 1').get());
+});
+
+// Synthèse santé : profil + dépistages + marqueurs hors plage
+app.get('/api/synthesis', (req, res) => {
+  const profile = db.prepare('SELECT * FROM profile WHERE id = 1').get();
+  // Complète le poids depuis la dernière mesure si non renseigné dans le profil
+  if (!profile.weight_kg) {
+    const w = db.prepare(`SELECT value FROM measurements WHERE type = 'poids' ORDER BY measured_at DESC LIMIT 1`).get();
+    if (w) profile.weight_kg = w.value;
+  }
+  res.json(buildSynthesis(profile, outOfRangeMarkers()));
 });
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));

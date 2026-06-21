@@ -21,6 +21,11 @@ export const api = {
   remove: (resource, id) => request(`/${resource}/${id}`, { method: 'DELETE' }),
   stats: () => request('/stats'),
   series: (type) => request(`/measurements/series/${type}`),
+  profile: {
+    get: () => request('/profile'),
+    update: (body) => request('/profile', { method: 'PUT', body }),
+  },
+  synthesis: () => request('/synthesis'),
   blood: {
     catalog: () => request('/blood/catalog'),
     tests: () => request('/blood/tests'),

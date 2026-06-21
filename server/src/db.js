@@ -84,6 +84,22 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_blood_results_test ON blood_results(blood_test_id);
+
+  -- Profil de l'utilisateur (une seule ligne, id = 1)
+  CREATE TABLE IF NOT EXISTS profile (
+    id               INTEGER PRIMARY KEY CHECK (id = 1),
+    sex              TEXT,                 -- F | M
+    birth_date       TEXT,                 -- AAAA-MM-JJ
+    height_cm        REAL,
+    weight_kg        REAL,
+    smoker           INTEGER DEFAULT 0,    -- 0 | 1
+    family_history   TEXT,                 -- antécédents familiaux (texte libre)
+    notes            TEXT,
+    last_mammography TEXT,                 -- date du dernier dépistage du sein
+    last_cervical    TEXT,                 -- date du dernier frottis / test HPV
+    last_colorectal  TEXT                  -- date du dernier dépistage colorectal
+  );
+  INSERT OR IGNORE INTO profile (id) VALUES (1);
 `);
 
 export default db;

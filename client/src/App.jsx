@@ -5,14 +5,18 @@ import Bilans from './pages/Bilans.jsx';
 import BilansSanguins from './pages/BilansSanguins.jsx';
 import RendezVous from './pages/RendezVous.jsx';
 import Resumes from './pages/Resumes.jsx';
+import Synthese from './pages/Synthese.jsx';
+import Profil from './pages/Profil.jsx';
 
 const nav = [
   { to: '/', label: 'Tableau de bord', icon: '🏠', end: true },
+  { to: '/synthese', label: 'Synthèse santé', icon: '🧠' },
   { to: '/suivi', label: 'Suivi de santé', icon: '📈' },
   { to: '/bilans-sanguins', label: 'Bilans sanguins', icon: '📊' },
   { to: '/bilans', label: 'Bilans & examens', icon: '🧪' },
   { to: '/rendez-vous', label: 'Rendez-vous', icon: '📅' },
   { to: '/resumes', label: 'Résumés médicaux', icon: '📋' },
+  { to: '/profil', label: 'Mon profil', icon: '👤' },
 ];
 
 export default function App() {
@@ -39,6 +43,8 @@ export default function App() {
       <main className="content">
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/synthese" element={<Synthese />} />
+          <Route path="/profil" element={<Profil />} />
           <Route path="/suivi" element={<Suivi />} />
           <Route path="/bilans-sanguins" element={<BilansSanguins />} />
           <Route path="/bilans" element={<Bilans />} />

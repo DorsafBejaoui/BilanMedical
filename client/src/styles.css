@@ -181,6 +181,28 @@ body {
 .insight-urgent { background: #fef2f2; color: #991b1b; font-weight: 600; }
 .disclaimer { font-size: 12px; color: var(--muted); margin: 14px 0 0; font-style: italic; }
 
+/* Profil */
+.checkbox { flex-direction: row !important; align-items: center; gap: 8px !important; font-weight: 500 !important; }
+.checkbox input { width: auto; }
+.fieldset { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.fieldset legend { font-size: 13px; font-weight: 600; padding: 0 6px; }
+.saved-badge { color: #065f46; font-weight: 600; align-self: center; }
+
+/* Synthèse */
+.profile-summary { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; font-size: 15px; }
+.profile-summary strong { font-size: 18px; }
+.screening-item { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.screening-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; }
+.screening-next { margin: 6px 0 0; font-size: 14px; }
+.finding { border-left: 4px solid var(--border); border-radius: 8px; padding: 10px 14px; background: #fafbfc; }
+.finding.status-eleve { border-left-color: var(--danger); }
+.finding.status-bas { border-left-color: var(--primary); }
+.finding-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.finding-insight { margin: 6px 0 0; font-size: 13px; line-height: 1.45; }
+.advice-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.advice-list li { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.45; }
+.advice-icon { font-size: 18px; }
+
 /* Graphique à zone de référence */
 .refchart { display: block; }
 .refchart .ref-band { fill: rgba(16, 185, 129, 0.14); }
