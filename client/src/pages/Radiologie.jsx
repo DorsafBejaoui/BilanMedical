@@ -85,7 +85,7 @@ export default function Radiologie() {
                 <div>
                   {r.exam_type && <span className="tag">{r.exam_type}</span>}
                   {r.body_part && <span className="tag" style={{ background: 'var(--bg-hover)' }}>{r.body_part}</span>}
-                  <h3>{r.exam_type || 'Examen d'imagerie'}{r.body_part ? ` — ${r.body_part}` : ''}</h3>
+                  <h3>{r.exam_type || "Examen d'imagerie"}{r.body_part ? ` — ${r.body_part}` : ''}</h3>
                   <p className="muted">
                     {formatDate(r.date)}
                     {r.doctor && ` · Dr ${r.doctor}`}
@@ -129,7 +129,7 @@ export default function Radiologie() {
 
       {open && (
         <Modal
-          title={editId ? 'Modifier le rapport' : 'Nouveau rapport d'imagerie'}
+          title={editId ? 'Modifier le rapport' : "Nouveau rapport d'imagerie"}
           onClose={() => setOpen(false)}
         >
           <form onSubmit={submit} className="form">

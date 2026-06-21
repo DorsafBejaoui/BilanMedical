@@ -86,7 +86,7 @@ export default function Dashboard() {
           <h3>🩻 Dernier rapport radiologie</h3>
           {stats.lastRadiology ? (
             <div className="dash-item">
-              <strong>{stats.lastRadiology.exam_type || 'Examen d'imagerie'}</strong>
+              <strong>{stats.lastRadiology.exam_type || "Examen d'imagerie"}</strong>
               {stats.lastRadiology.body_part && (
                 <span className="tag" style={{ marginLeft: 6 }}>{stats.lastRadiology.body_part}</span>
               )}
