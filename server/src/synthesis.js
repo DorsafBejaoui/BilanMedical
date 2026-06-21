@@ -106,7 +106,7 @@ function buildScreenings(profile, age) {
   return out;
 }
 
-// Conseils généraux selon profil + IMC
+// Conseils généraux selon profil + IMC + activité physique
 function buildGeneralAdvice(profile, age, bmi) {
   const advice = [];
   if (profile.smoker) {
@@ -114,6 +114,16 @@ function buildGeneralAdvice(profile, age, bmi) {
   }
   if (bmi && bmi.bmi >= 25) {
     advice.push({ level: 'info', icon: '⚖️', text: `IMC ${bmi.bmi} (${bmi.category}). ${bmi.advice}` });
+  }
+  // Conseil activité physique (personnalisé si renseigné)
+  if (profile.activity_type || profile.activity_frequency || profile.activity_duration) {
+    const parts = [];
+    if (profile.activity_type) parts.push(profile.activity_type);
+    if (profile.activity_frequency) parts.push(profile.activity_frequency);
+    if (profile.activity_duration) parts.push(`${profile.activity_duration} par séance`);
+    advice.push({ level: 'info', icon: '🏃', text: `Activité physique déclarée : ${parts.join(' · ')}. Continuez sur cette lancée — l'OMS recommande 150 min/semaine d'activité modérée.` });
+  } else {
+    advice.push({ level: 'info', icon: '🏃', text: "Visez au moins 150 min d'activité physique modérée par semaine (marche rapide, vélo, natation…). Renseignez votre activité dans le profil pour un suivi personnalisé." });
   }
   // Bilan lipidique selon âge/sexe
   if ((profile.sex === 'M' && age != null && age >= 40) || (profile.sex === 'F' && age != null && age >= 50)) {
@@ -123,7 +133,6 @@ function buildGeneralAdvice(profile, age, bmi) {
   if (age != null && age >= 45) {
     advice.push({ level: 'info', icon: '🩸', text: "Un dépistage du diabète (glycémie à jeun ou HbA1c) est conseillé après 45 ans, ou plus tôt en cas de surpoids/antécédents." });
   }
-  advice.push({ level: 'info', icon: '🏃', text: "Visez au moins 150 min d'activité physique modérée par semaine." });
   return advice;
 }
 

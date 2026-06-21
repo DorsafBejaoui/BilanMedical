@@ -2,9 +2,15 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { ageFrom } from '../helpers.js';
 
+const ACTIVITY_TYPES = [
+  'Marche rapide', 'Course à pied', 'Vélo', 'Natation', 'Musculation', 'Yoga / Pilates',
+  'Randonnée', 'Danse', 'Sports collectifs', 'Autre',
+];
+
 const empty = {
   sex: '', birth_date: '', height_cm: '', weight_kg: '', smoker: 0,
   family_history: '', notes: '', last_mammography: '', last_cervical: '', last_colorectal: '',
+  activity_type: '', activity_frequency: '', activity_duration: '',
 };
 
 export default function Profil() {
@@ -78,6 +84,47 @@ export default function Profil() {
           <textarea rows="2" placeholder="ex : mère cancer du sein, diabète…"
             value={form.family_history} onChange={(e) => set('family_history', e.target.value)} />
         </label>
+
+        <fieldset className="fieldset">
+          <legend>Activité physique</legend>
+          <p className="muted" style={{ fontSize: 12, marginTop: 0 }}>
+            Utilisé pour personnaliser les conseils dans la synthèse santé.
+          </p>
+          <div className="form-row">
+            <label>
+              Type d'activité
+              <select value={form.activity_type} onChange={(e) => set('activity_type', e.target.value)}>
+                <option value="">— Sélectionner —</option>
+                {ACTIVITY_TYPES.map((t) => <option key={t}>{t}</option>)}
+              </select>
+            </label>
+            <label>
+              Fréquence
+              <select value={form.activity_frequency} onChange={(e) => set('activity_frequency', e.target.value)}>
+                <option value="">— Sélectionner —</option>
+                <option>1 fois/semaine</option>
+                <option>2 fois/semaine</option>
+                <option>3 fois/semaine</option>
+                <option>4 fois/semaine</option>
+                <option>5 fois/semaine ou plus</option>
+                <option>Occasionnellement</option>
+                <option>Pas d'activité régulière</option>
+              </select>
+            </label>
+            <label>
+              Durée par séance
+              <select value={form.activity_duration} onChange={(e) => set('activity_duration', e.target.value)}>
+                <option value="">— Sélectionner —</option>
+                <option>Moins de 30 min</option>
+                <option>30 min</option>
+                <option>45 min</option>
+                <option>1 h</option>
+                <option>1 h 30</option>
+                <option>2 h ou plus</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
 
         <fieldset className="fieldset">
           <legend>Derniers dépistages (facultatif)</legend>

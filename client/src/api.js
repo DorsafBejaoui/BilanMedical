@@ -44,4 +44,20 @@ export const api = {
       return res.json();
     },
   },
+  radiology: {
+    list: () => request('/radiology'),
+    create: (body) => request('/radiology', { method: 'POST', body }),
+    update: (id, body) => request(`/radiology/${id}`, { method: 'PUT', body }),
+    remove: (id) => request(`/radiology/${id}`, { method: 'DELETE' }),
+    importPdf: async (file) => {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/radiology/import', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const m = await res.json().catch(() => ({}));
+        throw new Error(m.error || `Erreur ${res.status}`);
+      }
+      return res.json();
+    },
+  },
 };

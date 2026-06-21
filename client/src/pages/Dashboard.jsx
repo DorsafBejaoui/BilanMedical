@@ -4,9 +4,8 @@ import { api } from '../api.js';
 import { formatDate, formatDateTime } from '../helpers.js';
 
 const cards = [
-  { key: 'measurements', label: 'Mesures', icon: '📈', to: '/suivi', color: '#3b82f6' },
   { key: 'blood_tests', label: 'Bilans sanguins', icon: '📊', to: '/bilans-sanguins', color: '#ec4899' },
-  { key: 'bilans', label: 'Bilans & examens', icon: '🧪', to: '/bilans', color: '#10b981' },
+  { key: 'radiology', label: 'Radiologie', icon: '🩻', to: '/radiologie', color: '#10b981' },
   { key: 'appointments', label: 'Rendez-vous', icon: '📅', to: '/rendez-vous', color: '#f59e0b' },
   { key: 'summaries', label: 'Résumés', icon: '📋', to: '/resumes', color: '#8b5cf6' },
 ];
@@ -84,34 +83,18 @@ export default function Dashboard() {
         </section>
 
         <section className="panel">
-          <h3>🧪 Dernier bilan</h3>
-          {stats.lastBilan ? (
+          <h3>🩻 Dernier rapport radiologie</h3>
+          {stats.lastRadiology ? (
             <div className="dash-item">
-              <strong>{stats.lastBilan.title}</strong>
-              <p className="muted">{formatDate(stats.lastBilan.date)}</p>
-              {stats.lastBilan.conclusion && <p>{stats.lastBilan.conclusion}</p>}
+              <strong>{stats.lastRadiology.exam_type || 'Examen d'imagerie'}</strong>
+              {stats.lastRadiology.body_part && (
+                <span className="tag" style={{ marginLeft: 6 }}>{stats.lastRadiology.body_part}</span>
+              )}
+              <p className="muted">{formatDate(stats.lastRadiology.date)}{stats.lastRadiology.doctor && ` · Dr ${stats.lastRadiology.doctor}`}</p>
+              {stats.lastRadiology.conclusion && <p>{stats.lastRadiology.conclusion}</p>}
             </div>
           ) : (
-            <p className="muted">Aucun bilan enregistré.</p>
-          )}
-        </section>
-
-        <section className="panel">
-          <h3>📈 Mesures récentes</h3>
-          {stats.recentMeasurements.length ? (
-            <ul className="dash-list">
-              {stats.recentMeasurements.map((m) => (
-                <li key={m.id}>
-                  <span>{m.type}</span>
-                  <span className="badge">
-                    {m.value}{m.value2 ? `/${m.value2}` : ''} {m.unit || ''}
-                  </span>
-                  <span className="muted">{formatDate(m.measured_at)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted">Aucune mesure enregistrée.</p>
+            <p className="muted">Aucun rapport enregistré.</p>
           )}
         </section>
       </div>

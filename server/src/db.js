@@ -87,19 +87,42 @@ db.exec(`
 
   -- Profil de l'utilisateur (une seule ligne, id = 1)
   CREATE TABLE IF NOT EXISTS profile (
-    id               INTEGER PRIMARY KEY CHECK (id = 1),
-    sex              TEXT,                 -- F | M
-    birth_date       TEXT,                 -- AAAA-MM-JJ
-    height_cm        REAL,
-    weight_kg        REAL,
-    smoker           INTEGER DEFAULT 0,    -- 0 | 1
-    family_history   TEXT,                 -- antécédents familiaux (texte libre)
-    notes            TEXT,
-    last_mammography TEXT,                 -- date du dernier dépistage du sein
-    last_cervical    TEXT,                 -- date du dernier frottis / test HPV
-    last_colorectal  TEXT                  -- date du dernier dépistage colorectal
+    id                  INTEGER PRIMARY KEY CHECK (id = 1),
+    sex                 TEXT,                 -- F | M
+    birth_date          TEXT,                 -- AAAA-MM-JJ
+    height_cm           REAL,
+    weight_kg           REAL,
+    smoker              INTEGER DEFAULT 0,    -- 0 | 1
+    family_history      TEXT,                 -- antécédents familiaux (texte libre)
+    notes               TEXT,
+    last_mammography    TEXT,                 -- date du dernier dépistage du sein
+    last_cervical       TEXT,                 -- date du dernier frottis / test HPV
+    last_colorectal     TEXT,                 -- date du dernier dépistage colorectal
+    activity_type       TEXT,                 -- type(s) d'activité (marche, natation, vélo…)
+    activity_frequency  TEXT,                 -- fréquence (ex : 3 fois/semaine)
+    activity_duration   TEXT                  -- durée par séance (ex : 45 min)
   );
   INSERT OR IGNORE INTO profile (id) VALUES (1);
+
+  -- Rapports de radiologie (radio, écho, IRM, scanner, etc.)
+  CREATE TABLE IF NOT EXISTS radiology_reports (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    date        TEXT NOT NULL,
+    exam_type   TEXT,                   -- Radio, Échographie, IRM, Scanner, Mammographie…
+    body_part   TEXT,                   -- partie du corps concernée
+    doctor      TEXT,                   -- médecin prescripteur / radiologue
+    facility    TEXT,                   -- établissement / cabinet
+    conclusion  TEXT,                   -- conclusion / résultat en texte libre
+    notes       TEXT,
+    pdf_text    TEXT,                   -- texte extrait du PDF (brut)
+    filename    TEXT,                   -- nom du fichier d'origine
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
+
+// Migrations : ajoute les colonnes manquantes si la DB existait avant ces champs
+for (const col of ['activity_type TEXT', 'activity_frequency TEXT', 'activity_duration TEXT']) {
+  try { db.exec(`ALTER TABLE profile ADD COLUMN ${col}`); } catch { /* déjà existante */ }
+}
 
 export default db;
