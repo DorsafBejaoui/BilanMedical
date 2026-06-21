@@ -124,15 +124,22 @@ function aliasesFor(marker) {
 
 const toNum = (s) => parseFloat(s.replace(',', '.'));
 
-// Lit un intervalle de référence dans un fragment de texte (normalisé) situé
-// après la valeur d'un marqueur. Gère : "0.40 - 4.00", "0,40 a 4,00",
-// "< 5", "inf a 5", "> 0.4", "sup a 0.4". Renvoie {ref_min, ref_max} ou null.
-function parseRef(seg) {
-  let m = seg.match(/(\d+(?:[.,]\d+)?)\s*(?:-|–|a)\s*(\d+(?:[.,]\d+)?)/);
+// Un nombre « autonome » : non collé à une lettre ou un autre chiffre,
+// pour ne pas confondre le « 1 » de HbA1c, le « 4 » de T4, etc. avec une valeur.
+const NUM = '(?<![\\p{L}\\d])(\\d+(?:[.,]\\d+)?)(?![\\p{L}\\d])';
+const RANGE_RE = new RegExp(`${NUM}\\s*(?:-|–|a|à)\\s*(\\d+(?:[.,]\\d+)?)`, 'u');
+const LT_RE = new RegExp(`(?:<|inf(?:erieur)?\\.?\\s*a?)\\s*${NUM}`, 'u');
+const GT_RE = new RegExp(`(?:>|sup(?:erieur)?\\.?\\s*a?)\\s*${NUM}`, 'u');
+const FIRST_NUM_RE = new RegExp(NUM, 'u');
+
+// Lit un intervalle de référence dans un fragment de texte (normalisé).
+// Gère : "0.40 - 4.00", "0,40 à 4,00", "< 5", "inf à 5", "> 0.4", "sup à 0.4".
+function parseRange(seg) {
+  let m = seg.match(RANGE_RE);
   if (m) return { ref_min: toNum(m[1]), ref_max: toNum(m[2]) };
-  m = seg.match(/(?:<|inf(?:erieur)?\.?\s*a?)\s*(\d+(?:[.,]\d+)?)/);
+  m = seg.match(LT_RE);
   if (m) return { ref_min: null, ref_max: toNum(m[1]) };
-  m = seg.match(/(?:>|sup(?:erieur)?\.?\s*a?)\s*(\d+(?:[.,]\d+)?)/);
+  m = seg.match(GT_RE);
   if (m) return { ref_min: toNum(m[1]), ref_max: null };
   return null;
 }
@@ -161,29 +168,40 @@ function extractFromText(text) {
   let work = normalize(flat);
   const found = new Map();
   for (const { theme, marker, aliases } of all) {
+    let done = false;
     for (const alias of aliases) {
+      if (done) break;
       const esc = normalize(alias).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const re = new RegExp(`\\b${esc}\\b[^\\n\\d]{0,40}?(\\d+(?:[.,]\\d+)?)`);
-      const mm = work.match(re);
-      if (mm) {
-        const valueEnd = mm.index + mm[0].length;
-        // Texte restant sur la même ligne après la valeur (unité + référence)
-        const nl = work.indexOf('\n', valueEnd);
-        const tailEnd = Math.min(nl === -1 ? work.length : nl, valueEnd + 40);
-        const tail = work.slice(valueEnd, tailEnd);
-        const ref = parseRef(tail); // référence imprimée sur le bilan
-        found.set(marker.name, {
-          theme, marker: marker.name, value: parseFloat(mm[1].replace(',', '.')),
-          unit: marker.unit,
-          // Référence du PDF si présente, sinon repli sur le catalogue
-          ref_min: ref ? ref.ref_min : marker.min,
-          ref_max: ref ? ref.ref_max : marker.max,
-        });
-        // Masque la portion reconnue (nom + valeur + référence) pour éviter
-        // qu'un autre marqueur ne réutilise ces nombres.
-        work = work.slice(0, mm.index) + ' '.repeat(tailEnd - mm.index) + work.slice(tailEnd);
-        break;
-      }
+      const nameRe = new RegExp(`\\b${esc}\\b`);
+      const nm = work.match(nameRe);
+      if (!nm) continue;
+
+      // On raisonne sur la ligne entière contenant le marqueur
+      const start = nm.index;
+      const lineStart = work.lastIndexOf('\n', start) + 1;
+      const nl = work.indexOf('\n', start);
+      const lineEnd = nl === -1 ? work.length : nl;
+      const afterName = work.slice(start + nm[0].length, lineEnd);
+
+      // La valeur usuelle est étiquetée "N:" → on sépare valeur (avant) et référence (après)
+      const nIdx = afterName.search(/\bn\s*:/);
+      const valuePart = nIdx >= 0 ? afterName.slice(0, nIdx) : afterName;
+      const refPart = nIdx >= 0 ? afterName.slice(nIdx) : afterName;
+
+      const vm = valuePart.match(FIRST_NUM_RE); // 1ère valeur autonome après le nom
+      if (!vm) continue; // nom trouvé mais pas de valeur exploitable → alias suivant
+
+      const ref = parseRange(refPart); // référence "N:" si présente, sinon plage de la ligne
+      found.set(marker.name, {
+        theme, marker: marker.name, value: toNum(vm[1]),
+        unit: marker.unit,
+        // Référence lue sur le bilan, sinon repli sur le catalogue
+        ref_min: ref ? ref.ref_min : marker.min,
+        ref_max: ref ? ref.ref_max : marker.max,
+      });
+      // Masque toute la ligne pour qu'un autre marqueur n'y repioche pas de nombre
+      work = work.slice(0, lineStart) + ' '.repeat(lineEnd - lineStart) + work.slice(lineEnd);
+      done = true;
     }
   }
 
