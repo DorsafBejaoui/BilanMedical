@@ -21,7 +21,3 @@ const children = procs.map(({ name, cmd, args, color }) => {
 const shutdown = () => { children.forEach((c) => c.kill()); process.exit(0); };
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
-
-const shutdown = () => { children.forEach((c) => c.kill()); process.exit(0); };
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
