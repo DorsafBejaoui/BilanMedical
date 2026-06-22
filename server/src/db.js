@@ -134,6 +134,16 @@ db.exec(`
     duration   TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  -- Valeurs usuelles personnalisées (priorité maximale sur catalogue et PDF)
+  CREATE TABLE IF NOT EXISTS marker_references (
+    marker     TEXT PRIMARY KEY,
+    theme      TEXT,
+    unit       TEXT,
+    ref_min    REAL,
+    ref_max    REAL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `);
 
 export default db;

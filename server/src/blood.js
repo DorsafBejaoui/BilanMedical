@@ -47,8 +47,16 @@ export function statusOf(value, min, max) {
   return 'normal';
 }
 
+// Charge les valeurs usuelles personnalisées (priorité maximale)
+function getUserRefs() {
+  const map = new Map();
+  for (const r of db.prepare('SELECT * FROM marker_references').all()) map.set(r.marker, r);
+  return map;
+}
+
 // Construit le résumé par thème (réutilisé par /summary et le tableau de bord)
 export function getSummary() {
+  const userRefs = getUserRefs();
   const rows = db
     .prepare(
       `SELECT br.theme, br.marker, br.unit, br.ref_min, br.ref_max, br.value, bt.date
@@ -67,20 +75,29 @@ export function getSummary() {
     }
     const m = markers.get(r.marker);
     m.history.push({ date: r.date, value: r.value });
-    m.unit = r.unit;
-    m.ref_min = r.ref_min;
-    m.ref_max = r.ref_max;
+    // ref du bilan (PDF/saisie) uniquement si pas de valeur personnalisée
+    if (!userRefs.has(r.marker)) {
+      m.unit = r.unit;
+      m.ref_min = r.ref_min;
+      m.ref_max = r.ref_max;
+    }
   }
 
   return [...themes.entries()].map(([theme, markers]) => ({
     theme,
     markers: [...markers.values()].map((m) => {
+      const uRef = userRefs.get(m.marker);
+      const ref_min = uRef ? uRef.ref_min : m.ref_min;
+      const ref_max = uRef ? uRef.ref_max : m.ref_max;
+      const unit = (uRef && uRef.unit) ? uRef.unit : m.unit;
       const last = m.history[m.history.length - 1];
       const prev = m.history.length > 1 ? m.history[m.history.length - 2] : null;
       return {
         ...m,
+        ref_min, ref_max, unit,
+        userDefinedRef: !!uRef,
         last,
-        status: statusOf(last.value, m.ref_min, m.ref_max),
+        status: statusOf(last.value, ref_min, ref_max),
         trend: prev ? Math.sign(last.value - prev.value) : 0,
       };
     }),
@@ -266,6 +283,106 @@ router.delete('/tests/:id', (req, res) => {
 });
 
 router.get('/summary', (req, res) => res.json(getSummary()));
+
+// --- Valeurs usuelles personnalisées ---------------------------------------
+
+// Renvoie la liste fusionnée catalogue + overrides utilisateur
+router.get('/references', (req, res) => {
+  const userRefs = getUserRefs();
+  const merged = [];
+  for (const theme of CATALOG) {
+    for (const m of theme.markers) {
+      const u = userRefs.get(m.name);
+      merged.push({
+        marker: m.name,
+        theme: theme.theme,
+        unit: u ? (u.unit ?? m.unit) : m.unit,
+        ref_min: u ? u.ref_min : m.min,
+        ref_max: u ? u.ref_max : m.max,
+        catalog_min: m.min,
+        catalog_max: m.max,
+        catalog_unit: m.unit,
+        source: u ? 'user' : 'catalog',
+      });
+    }
+  }
+  res.json(merged);
+});
+
+router.put('/references/:marker', (req, res) => {
+  const marker = decodeURIComponent(req.params.marker);
+  const { unit, ref_min, ref_max, theme } = req.body;
+  db.prepare(`
+    INSERT INTO marker_references (marker, theme, unit, ref_min, ref_max, updated_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now'))
+    ON CONFLICT(marker) DO UPDATE SET
+      theme = excluded.theme, unit = excluded.unit,
+      ref_min = excluded.ref_min, ref_max = excluded.ref_max,
+      updated_at = excluded.updated_at
+  `).run(
+    marker,
+    theme || null,
+    unit || null,
+    ref_min === '' || ref_min == null ? null : Number(ref_min),
+    ref_max === '' || ref_max == null ? null : Number(ref_max)
+  );
+  res.json({ ok: true });
+});
+
+router.delete('/references/:marker', (req, res) => {
+  db.prepare('DELETE FROM marker_references WHERE marker = ?').run(decodeURIComponent(req.params.marker));
+  res.status(204).end();
+});
+
+// Import CSV : Marqueur;Min;Max;Unité  (en-tête requis, séparateur ; ou ,)
+router.post('/references/import', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
+  const text = req.file.buffer.toString('utf-8');
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) return res.status(422).json({ error: 'Fichier vide ou sans en-tête' });
+
+  const sep = lines[0].includes(';') ? ';' : ',';
+  const header = lines[0].split(sep).map(h => h.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''));
+  const iMarker = header.findIndex(h => h.includes('marqueur') || h.includes('marker'));
+  const iMin    = header.findIndex(h => h === 'min');
+  const iMax    = header.findIndex(h => h === 'max');
+  const iUnit   = header.findIndex(h => h.includes('unit'));
+  if (iMarker < 0) return res.status(422).json({ error: "Colonne 'Marqueur' introuvable dans l'en-tête" });
+
+  // Index catalogue pour retrouver thème et valeurs par défaut
+  const catIndex = new Map();
+  for (const theme of CATALOG) for (const m of theme.markers) catIndex.set(m.name, { theme: theme.theme, ...m });
+
+  const toNum = (s) => { if (!s) return null; const n = parseFloat(s.replace(',', '.')); return isNaN(n) ? null : n; };
+
+  const upsert = db.prepare(`
+    INSERT INTO marker_references (marker, theme, unit, ref_min, ref_max, updated_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now'))
+    ON CONFLICT(marker) DO UPDATE SET
+      theme = excluded.theme, unit = excluded.unit,
+      ref_min = excluded.ref_min, ref_max = excluded.ref_max,
+      updated_at = excluded.updated_at
+  `);
+
+  let count = 0;
+  const errors = [];
+  const tx = db.transaction(() => {
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(sep).map(c => c.trim());
+      const marker = cols[iMarker];
+      if (!marker) continue;
+      const cat = catIndex.get(marker);
+      const ref_min = iMin >= 0 ? toNum(cols[iMin]) : null;
+      const ref_max = iMax >= 0 ? toNum(cols[iMax]) : null;
+      const unit    = iUnit >= 0 ? (cols[iUnit] || null) : (cat ? cat.unit : null);
+      if (ref_min === null && ref_max === null) { errors.push(`Ligne ${i + 1} (${marker}) : aucune valeur min/max`); continue; }
+      upsert.run(marker, cat ? cat.theme : null, unit, ref_min, ref_max);
+      count++;
+    }
+  });
+  tx();
+  res.json({ imported: count, errors });
+});
 
 // Import d'un PDF de laboratoire : renvoie un brouillon (date + résultats détectés)
 router.post('/import', upload.single('file'), async (req, res) => {

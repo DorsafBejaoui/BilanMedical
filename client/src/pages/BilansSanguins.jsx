@@ -18,24 +18,31 @@ function refLabel(min, max) {
 }
 
 export default function BilansSanguins() {
-  const [view, setView] = useState('resume'); // resume | rapports
+  const [view, setView] = useState('resume'); // resume | rapports | references
   const [tests, setTests] = useState([]);
   const [summary, setSummary] = useState([]);
   const [catalog, setCatalog] = useState([]);
+  const [references, setReferences] = useState([]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm());
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState(null);
   const [info, setInfo] = useState(null);
   const [importing, setImporting] = useState(false);
+  const [importingCsv, setImportingCsv] = useState(false);
+  const [editRef, setEditRef] = useState(null); // { marker, ref_min, ref_max, unit, theme }
   // Filtres du résumé
   const [themeFilter, setThemeFilter] = useState('tous');
   const [markerQuery, setMarkerQuery] = useState('');
+  const [refQuery, setRefQuery] = useState('');
   const fileRef = useRef(null);
+  const csvRef = useRef(null);
 
+  const loadRefs = () => api.blood.references.list().then(setReferences).catch(() => {});
   const load = () => {
     api.blood.tests().then(setTests).catch((e) => setError(e.message));
     api.blood.summary().then(setSummary).catch((e) => setError(e.message));
+    loadRefs();
   };
   useEffect(() => {
     api.blood.catalog().then(setCatalog).catch(() => setCatalog([]));
@@ -124,6 +131,61 @@ export default function BilansSanguins() {
     }
   };
 
+  // Import CSV de valeurs usuelles
+  const onImportCsv = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setImportingCsv(true);
+    setError(null);
+    try {
+      const result = await api.blood.references.importCsv(file);
+      setInfo(`${result.imported} valeur(s) importée(s).${result.errors?.length ? ` Avertissements : ${result.errors.join(' | ')}` : ''}`);
+      loadRefs();
+      load();
+    } catch (err) { setError(err.message); }
+    finally { setImportingCsv(false); }
+  };
+
+  // Téléchargement du modèle CSV (généré côté client depuis le catalogue)
+  const downloadTemplate = () => {
+    const rows = ['Marqueur;Thème;Unité;Min;Max'];
+    for (const t of catalog) {
+      for (const m of t.markers) {
+        rows.push(`${m.name};${t.theme};${m.unit ?? ''};${m.min ?? ''};${m.max ?? ''}`);
+      }
+    }
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'modele_valeurs_usuelles.csv';
+    a.click();
+  };
+
+  // Sauvegarde d'une édition inline de référence
+  const saveRef = async () => {
+    if (!editRef) return;
+    try {
+      await api.blood.references.update(editRef.marker, editRef);
+      setEditRef(null);
+      loadRefs();
+      load();
+    } catch (err) { setError(err.message); }
+  };
+
+  const resetRef = async (marker) => {
+    if (!confirm(`Remettre les valeurs usuelles du catalogue pour "${marker}" ?`)) return;
+    await api.blood.references.remove(marker);
+    loadRefs();
+    load();
+  };
+
+  // Références filtrées
+  const filteredRefs = useMemo(() => {
+    const q = refQuery.trim().toLowerCase();
+    return q ? references.filter((r) => r.marker.toLowerCase().includes(q) || r.theme.toLowerCase().includes(q)) : references;
+  }, [references, refQuery]);
+
   // Résumé filtré
   const filteredSummary = useMemo(() => {
     const q = markerQuery.trim().toLowerCase();
@@ -142,6 +204,7 @@ export default function BilansSanguins() {
         </div>
         <div className="header-actions">
           <input ref={fileRef} type="file" accept="application/pdf" hidden onChange={onImportFile} />
+          <input ref={csvRef} type="file" accept=".csv,text/csv" hidden onChange={onImportCsv} />
           <button className="btn ghost" disabled={importing} onClick={() => fileRef.current?.click()}>
             {importing ? '⏳ Lecture…' : '📄 Importer un PDF'}
           </button>
@@ -151,12 +214,17 @@ export default function BilansSanguins() {
 
       {error && <p className="error no-print">{error}</p>}
 
+      {info && <p className="info-banner no-print">{info}</p>}
+
       <div className="filters no-print">
         <button className={`chip ${view === 'resume' ? 'active' : ''}`} onClick={() => setView('resume')}>
           Résumé par thème
         </button>
         <button className={`chip ${view === 'rapports' ? 'active' : ''}`} onClick={() => setView('rapports')}>
           Rapports ({tests.length})
+        </button>
+        <button className={`chip ${view === 'references' ? 'active' : ''}`} onClick={() => setView('references')}>
+          Valeurs usuelles {references.filter(r => r.source === 'user').length > 0 && `(${references.filter(r => r.source === 'user').length} personnalisées)`}
         </button>
       </div>
 
@@ -262,10 +330,89 @@ export default function BilansSanguins() {
         )
       )}
 
+      {view === 'references' && (
+        <>
+          <div className="summary-toolbar no-print" style={{ alignItems: 'center' }}>
+            <input className="search inline" placeholder="🔍 Filtrer un marqueur ou thème…"
+              value={refQuery} onChange={(e) => setRefQuery(e.target.value)} />
+            <button className="btn ghost" onClick={downloadTemplate}>⬇ Modèle CSV</button>
+            <button className="btn" disabled={importingCsv} onClick={() => csvRef.current?.click()}>
+              {importingCsv ? '⏳ Import…' : '📥 Importer CSV'}
+            </button>
+          </div>
+          <p className="muted" style={{ fontSize: 13, marginBottom: 12 }}>
+            Importez un fichier CSV (<code>Marqueur;Min;Max;Unité</code>) pour définir vos valeurs usuelles personnelles.
+            Ces valeurs sont prioritaires sur le catalogue et sur les PDF importés.
+          </p>
+          <div className="panel" style={{ padding: 0, overflowX: 'auto' }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Marqueur</th>
+                  <th>Thème</th>
+                  <th>Unité</th>
+                  <th>Min</th>
+                  <th>Max</th>
+                  <th>Source</th>
+                  <th className="no-print">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRefs.map((r) => (
+                  <tr key={r.marker} className={r.source === 'user' ? 'ref-row-user' : ''}>
+                    {editRef?.marker === r.marker ? (
+                      <>
+                        <td><strong>{r.marker}</strong></td>
+                        <td className="muted">{r.theme}</td>
+                        <td>
+                          <input style={{ width: 70 }} value={editRef.unit ?? ''} onChange={(e) => setEditRef({ ...editRef, unit: e.target.value })} />
+                        </td>
+                        <td>
+                          <input type="number" step="any" style={{ width: 70 }} value={editRef.ref_min ?? ''} onChange={(e) => setEditRef({ ...editRef, ref_min: e.target.value })} />
+                        </td>
+                        <td>
+                          <input type="number" step="any" style={{ width: 70 }} value={editRef.ref_max ?? ''} onChange={(e) => setEditRef({ ...editRef, ref_max: e.target.value })} />
+                        </td>
+                        <td />
+                        <td className="no-print" style={{ display: 'flex', gap: 6 }}>
+                          <button className="btn small" onClick={saveRef}>✓</button>
+                          <button className="btn small ghost" onClick={() => setEditRef(null)}>✕</button>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td><strong>{r.marker}</strong></td>
+                        <td className="muted">{r.theme}</td>
+                        <td>{r.unit || '—'}</td>
+                        <td>{r.ref_min ?? '—'}</td>
+                        <td>{r.ref_max ?? '—'}</td>
+                        <td>
+                          {r.source === 'user'
+                            ? <span className="tag status-normal">Personnalisé</span>
+                            : <span className="tag" style={{ color: 'var(--muted)' }}>Catalogue</span>}
+                        </td>
+                        <td className="no-print" style={{ display: 'flex', gap: 6 }}>
+                          <button className="icon-btn" title="Modifier"
+                            onClick={() => setEditRef({ marker: r.marker, theme: r.theme, unit: r.unit ?? '', ref_min: r.ref_min ?? '', ref_max: r.ref_max ?? '' })}>
+                            ✏️
+                          </button>
+                          {r.source === 'user' && (
+                            <button className="icon-btn danger" title="Remettre valeur catalogue" onClick={() => resetRef(r.marker)}>↩</button>
+                          )}
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
       {open && (
         <Modal title={editId ? 'Modifier le rapport' : 'Nouveau rapport de bilan sanguin'} onClose={() => setOpen(false)}>
           <form onSubmit={submit} className="form">
-            {info && <p className="info-banner">{info}</p>}
             <div className="form-row">
               <label>
                 Date du prélèvement
