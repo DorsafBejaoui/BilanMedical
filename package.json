@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Application de suivi de santé : bilans, résumés médicaux et rendez-vous",
   "private": true,
+  "type": "module",
   "scripts": {
     "install:all": "npm --prefix server install && npm --prefix client install",
     "server": "npm --prefix server start",
