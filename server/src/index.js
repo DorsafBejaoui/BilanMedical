@@ -6,6 +6,7 @@ import db from './db.js';
 import { crudRouter } from './crud.js';
 import bloodRouter, { outOfRangeMarkers } from './blood.js';
 import { buildSynthesis } from './synthesis.js';
+import { buildContext } from './context.js';
 
 const app = express();
 app.use(cors());
@@ -93,7 +94,9 @@ app.get('/api/synthesis', (req, res) => {
     if (w) profile.weight_kg = w.value;
   }
   profile.activities = db.prepare('SELECT * FROM profile_activities ORDER BY created_at ASC').all();
-  res.json(buildSynthesis(profile, outOfRangeMarkers()));
+  const summaries = db.prepare('SELECT title, content, tags, date FROM summaries').all();
+  const context = buildContext(summaries);
+  res.json(buildSynthesis(profile, outOfRangeMarkers(), context));
 });
 
 // Activités physiques (liste, ajout, suppression)

@@ -4,6 +4,8 @@
 // français généraux (HAS / dépistages organisés). Elles sont indicatives et ne
 // remplacent pas l'avis d'un médecin, qui adapte selon les facteurs de risque.
 
+import { medContextForMarker } from './context.js';
+
 export function ageFromBirth(birthDate) {
   if (!birthDate) return null;
   const b = new Date(birthDate);
@@ -39,6 +41,10 @@ function frDate(iso) {
   return new Date(iso).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 }
 
+function cap(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
 function bmiInfo(height_cm, weight_kg) {
   if (!height_cm || !weight_kg) return null;
   const h = height_cm / 100;
@@ -51,8 +57,22 @@ function bmiInfo(height_cm, weight_kg) {
   return { bmi, category, advice };
 }
 
+// Ajoute aux dépistages une note si un examen correspondant est mentionné dans
+// les résumés médicaux (la personne l'a peut-être déjà fait sans l'avoir saisi).
+function applyExamMentions(out, context) {
+  const mentions = context && context.examMentions;
+  if (!mentions) return out;
+  for (const s of out) {
+    const m = mentions[s.key];
+    if (!m) continue;
+    const when = m.date ? new Date(m.date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : null;
+    s.mentionNote = `Vos résumés médicaux évoquent un examen de type « ${m.label} »${when ? ` (résumé de ${when})` : ''}. S'il a déjà été réalisé, pensez à renseigner sa date dans votre profil pour fiabiliser ce calcul.`;
+  }
+  return out;
+}
+
 // Construit les dépistages applicables selon âge / sexe / antécédents
-function buildScreenings(profile, age) {
+function buildScreenings(profile, age, context) {
   const sex = profile.sex;
   const hasFamilyHistory = !!(profile.family_history && profile.family_history.trim());
   const out = [];
@@ -103,12 +123,29 @@ function buildScreenings(profile, age) {
       recommendation: 'Une échographie de dépistage (une fois) est conseillée chez l’homme fumeur/ex-fumeur de 65 à 75 ans.', note: '' });
   }
 
-  return out;
+  return applyExamMentions(out, context);
 }
 
-// Conseils généraux selon profil + IMC + activité physique
-function buildGeneralAdvice(profile, age, bmi) {
+// Conseils généraux selon profil + IMC + activité physique + traitements
+function buildGeneralAdvice(profile, age, bmi, context, bloodFindings) {
   const advice = [];
+
+  // Prise en compte des traitements mentionnés dans les résumés médicaux
+  const meds = (context && context.medications) || [];
+  if (meds.length > 0) {
+    const labels = [...new Set(meds.map((m) => m.label))].join(', ');
+    advice.push({ level: 'info', icon: '💊', text: `Traitement(s) repéré(s) dans vos résumés médicaux : ${labels}. Les recommandations ci-dessous en tiennent compte. Ne modifiez jamais un traitement sans avis médical.` });
+
+    // Croisement ciblé : marqueur encore anormal malgré un traitement dédié
+    const findings = bloodFindings || [];
+    for (const med of meds) {
+      const stillOff = findings.find((f) => med.markers.includes(f.marker));
+      if (stillOff) {
+        advice.push({ level: 'warn', icon: '🔎', text: `${cap(stillOff.marker)} reste hors plage (${stillOff.value} ${stillOff.unit || ''}) alors qu'un ${med.label} est mentionné. À rediscuter avec votre médecin pour évaluer l'efficacité ou l'adaptation du traitement.` });
+      }
+    }
+  }
+
   if (profile.smoker) {
     advice.push({ level: 'warn', icon: '🚭', text: "Tabac : l'arrêt est le geste le plus bénéfique pour votre santé. Un accompagnement (tabac info service, médecin) augmente les chances de réussite." });
   }
@@ -139,10 +176,16 @@ function buildGeneralAdvice(profile, age, bmi) {
   return advice;
 }
 
-export function buildSynthesis(profile, bloodFindings) {
+export function buildSynthesis(profile, bloodFindings, context) {
   const age = ageFromBirth(profile.birth_date);
   const bmi = bmiInfo(profile.height_cm, profile.weight_kg);
   const hasProfile = !!(profile.sex && profile.birth_date);
+
+  // Attache aux marqueurs hors plage une note tenant compte des traitements
+  const findings = (bloodFindings || []).map((f) => {
+    const medContext = medContextForMarker(context, f.marker);
+    return medContext ? { ...f, medContext } : f;
+  });
 
   return {
     hasProfile,
@@ -155,8 +198,8 @@ export function buildSynthesis(profile, bloodFindings) {
       bmi: bmi ? bmi.bmi : null,
       bmiCategory: bmi ? bmi.category : null,
     },
-    screenings: hasProfile ? buildScreenings(profile, age) : [],
-    generalAdvice: hasProfile ? buildGeneralAdvice(profile, age, bmi) : [],
-    bloodFindings: bloodFindings || [],
+    screenings: hasProfile ? buildScreenings(profile, age, context) : [],
+    generalAdvice: hasProfile ? buildGeneralAdvice(profile, age, bmi, context, findings) : [],
+    bloodFindings: findings,
   };
 }

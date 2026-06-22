@@ -74,6 +74,7 @@ export default function Synthese() {
                     <p className="screening-next">📌 Prochain examen conseillé : <strong>{formatDate(s.nextDate)}</strong></p>
                   )}
                   {s.note && <p className="muted" style={{ fontSize: 13 }}>{s.note}</p>}
+                  {s.mentionNote && <p className="context-note">📝 {s.mentionNote}</p>}
                 </div>
               );
             })}
@@ -93,6 +94,7 @@ export default function Synthese() {
                   <span>{m.value} {m.unit || ''} <span className="muted">({m.status === 'eleve' ? 'élevé' : 'bas'}, réf. {m.ref_min ?? '—'}–{m.ref_max ?? '—'})</span></span>
                 </div>
                 {m.insight && <p className="finding-insight">{m.insight.level === 'urgent' ? '🚨 ' : '💡 '}{m.insight.message}</p>}
+                {m.medContext && <p className="context-note">💊 {m.medContext}</p>}
               </div>
             ))}
           </div>
