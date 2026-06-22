@@ -15,6 +15,7 @@ export default function RendezVous() {
   const [form, setForm] = useState(emptyForm());
   const [editId, setEditId] = useState(null);
   const [filter, setFilter] = useState('tous');
+  const [sortDir, setSortDir] = useState('desc'); // desc = plus récent d'abord
   const [error, setError] = useState(null);
 
   const load = () => api.list('appointments').then(setItems).catch((e) => setError(e.message));
@@ -46,7 +47,10 @@ export default function RendezVous() {
 
   const filtered = (filter === 'tous' ? items : items.filter((a) => a.status === filter))
     .slice()
-    .sort((a, b) => new Date(b.starts_at) - new Date(a.starts_at));
+    .sort((a, b) => {
+      const diff = new Date(b.starts_at) - new Date(a.starts_at);
+      return sortDir === 'desc' ? diff : -diff;
+    });
 
   return (
     <div className="page">
@@ -66,6 +70,14 @@ export default function RendezVous() {
             {f === 'tous' ? 'Tous' : STATUS[f]}
           </button>
         ))}
+        <button
+          className="chip"
+          style={{ marginLeft: 'auto' }}
+          onClick={() => setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))}
+          title="Changer l'ordre de tri"
+        >
+          {sortDir === 'desc' ? '↓ Plus récent d’abord' : '↑ Plus ancien d’abord'}
+        </button>
       </div>
 
       {filtered.length === 0 ? (
