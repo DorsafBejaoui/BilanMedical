@@ -44,7 +44,9 @@ export default function RendezVous() {
     load();
   };
 
-  const filtered = filter === 'tous' ? items : items.filter((a) => a.status === filter);
+  const filtered = (filter === 'tous' ? items : items.filter((a) => a.status === filter))
+    .slice()
+    .sort((a, b) => new Date(b.starts_at) - new Date(a.starts_at));
 
   return (
     <div className="page">
