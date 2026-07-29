@@ -139,4 +139,17 @@ export const CATALOG = [
       { name: 'NT-proBNP', unit: 'pg/mL', min: null, max: 125, aliases: ['nt probnp', 'pro bnp', 'bnp'] },
     ],
   },
+  {
+    theme: 'Composition corporelle',
+    markers: [
+      { name: 'Masse grasse (%)', unit: '%', min: null, max: null, aliases: ['taux de graisse', 'masse grasse pct', '% masse grasse', 'fat mass', 'body fat'] },
+      { name: 'Masse grasse (kg)', unit: 'kg', min: null, max: null, aliases: ['graisse corporelle kg', 'fat mass kg'] },
+      { name: 'Masse musculaire (kg)', unit: 'kg', min: null, max: null, aliases: ['masse maigre', 'muscle mass', 'lean mass', 'masse musculaire squelettique'] },
+      { name: 'Masse osseuse (kg)', unit: 'kg', min: null, max: null, aliases: ['masse osseuse', 'bone mass', 'bone mineral content'] },
+      { name: 'Eau corporelle (%)', unit: '%', min: 45, max: 65, aliases: ['eau totale', 'taux eau', 'total body water', 'hydratation'] },
+      { name: 'Graisse viscérale (niveau)', unit: '', min: null, max: 12, aliases: ['graisse viscerale', 'visceral fat', 'indice graisse viscerale', 'niveau graisse viscerale'] },
+      { name: 'Âge métabolique', unit: 'ans', min: null, max: null, aliases: ['age metabolique', 'metabolic age'] },
+      { name: 'Masse corporelle maigre (kg)', unit: 'kg', min: null, max: null, aliases: ['poids maigre', 'free fat mass', 'ffm'] },
+    ],
+  },
 ];

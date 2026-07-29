@@ -166,6 +166,28 @@ const INSIGHTS = {
   'NT-proBNP': {
     eleve: { level: 'warn', message: "NT-proBNP élevé : peut évoquer une insuffisance cardiaque. Avis médical conseillé." },
   },
+
+  // --- Composition corporelle ---------------------------------------------
+  'Masse grasse (%)': {
+    eleve: { level: 'warn', message: "Taux de masse grasse élevé : associé à un risque cardiovasculaire et métabolique accru. Une activité physique régulière combinée à une alimentation équilibrée permet de le réduire progressivement. Parlez-en à votre médecin ou un diététicien." },
+    bas:   { level: 'info', message: "Taux de masse grasse bas : peut indiquer une maigreur excessive. Assurez-vous que votre apport calorique et protéique est suffisant, surtout si vous pratiquez une activité physique intense." },
+  },
+  'Masse grasse (kg)': {
+    eleve: { level: 'warn', message: "Masse grasse élevée en valeur absolue : à croiser avec le pourcentage et l'IMC pour une interprétation complète. L'activité physique et une alimentation adaptée restent les leviers principaux." },
+  },
+  'Masse musculaire (kg)': {
+    bas: { level: 'warn', message: "Masse musculaire basse (sarcopénie possible) : la perte musculaire est associée à la fatigue, aux chutes et à un métabolisme ralenti. Un apport protéique suffisant (1,2–1,6 g/kg/j) et un entraînement en résistance sont recommandés." },
+  },
+  'Eau corporelle (%)': {
+    bas:   { level: 'warn', message: "Taux d'hydratation bas : une faible teneur en eau corporelle peut indiquer une déshydratation chronique. Visez 1,5 à 2 L d'eau par jour et réévaluez après renutrition si une carence est suspectée." },
+    eleve: { level: 'info', message: "Taux d'eau corporel élevé : peut être normal chez les personnes très musclées. Une rétention d'eau excessive (œdèmes) mérite un avis médical." },
+  },
+  'Graisse viscérale (niveau)': {
+    eleve: { level: 'warn', message: "Graisse viscérale élevée (niveau > 12) : la graisse abdominale profonde est le facteur de risque métabolique le plus important (diabète, hypertension, maladies cardiovasculaires). Elle répond bien à l'exercice aérobie régulier et à la réduction des sucres rapides." },
+  },
+  'Âge métabolique': {
+    eleve: { level: 'info', message: "Âge métabolique supérieur à votre âge réel : indique que votre métabolisme basal est moins efficace que la moyenne. L'entraînement musculaire et une alimentation adaptée peuvent l'améliorer progressivement." },
+  },
 };
 
 const FALLBACK = {

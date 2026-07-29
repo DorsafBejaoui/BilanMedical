@@ -68,6 +68,11 @@ const MEDICATIONS = [
     keywords: ['allopurinol', 'zyloric', 'fébuxostat', 'febuxostat', 'adenuric', 'colchicine'],
     markers: ['Acide urique'],
   },
+  {
+    label: 'analyse de composition corporelle (InBody, Tanita…)',
+    keywords: ['inbody', 'tanita', 'composition corporelle', 'masse grasse', 'masse musculaire', 'graisse viscerale', 'impedancemetrie', 'impedancemétrie', 'bioimpedance'],
+    markers: ['Masse grasse (%)', 'Masse musculaire (kg)', 'Graisse viscérale (niveau)', 'Eau corporelle (%)'],
+  },
 ];
 
 // Examens / dépistages reconnus dans le texte, rattachés aux clés de dépistage.
