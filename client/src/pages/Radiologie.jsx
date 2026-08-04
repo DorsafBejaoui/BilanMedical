@@ -67,7 +67,7 @@ export default function Radiologie() {
     <div className="page">
       <header className="page-header">
         <div>
-          <h2>🩻 Rapports Radiologie</h2>
+          <h2>🩻 Rapports Médicaux</h2>
           <p className="muted">Radiographies, échographies, IRM, scanners et autres examens d'imagerie</p>
         </div>
         <button className="btn" onClick={openNew}>+ Nouveau rapport</button>

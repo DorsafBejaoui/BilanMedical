@@ -5,7 +5,7 @@ import { formatDate, formatDateTime } from '../helpers.js';
 
 const cards = [
   { key: 'blood_tests', label: 'Bilans sanguins', icon: '📊', to: '/bilans-sanguins', color: '#ec4899' },
-  { key: 'radiology', label: 'Radiologie', icon: '🩻', to: '/radiologie', color: '#10b981' },
+  { key: 'radiology', label: 'Rapports Médicaux', icon: '🩻', to: '/radiologie', color: '#10b981' },
   { key: 'appointments', label: 'Rendez-vous', icon: '📅', to: '/rendez-vous', color: '#f59e0b' },
   { key: 'summaries', label: 'Résumés', icon: '📋', to: '/resumes', color: '#8b5cf6' },
 ];
@@ -83,7 +83,7 @@ export default function Dashboard() {
         </section>
 
         <section className="panel">
-          <h3>🩻 Dernier rapport radiologie</h3>
+          <h3>🩻 Dernier rapport médical</h3>
           {stats.lastRadiology ? (
             <div className="dash-item">
               <strong>{stats.lastRadiology.exam_type || "Examen d'imagerie"}</strong>

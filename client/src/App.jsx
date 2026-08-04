@@ -11,7 +11,7 @@ const nav = [
   { to: '/', label: 'Tableau de bord', icon: '🏠', end: true },
   { to: '/synthese', label: 'Synthèse santé', icon: '🧠' },
   { to: '/bilans-sanguins', label: 'Bilans sanguins', icon: '📊' },
-  { to: '/radiologie', label: 'Rapports Radiologie', icon: '🩻' },
+  { to: '/radiologie', label: 'Rapports Médicaux', icon: '🩻' },
   { to: '/rendez-vous', label: 'Rendez-vous', icon: '📅' },
   { to: '/resumes', label: 'Résumés médicaux', icon: '📋' },
   { to: '/profil', label: 'Mon profil', icon: '👤' },
