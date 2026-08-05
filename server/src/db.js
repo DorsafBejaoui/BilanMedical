@@ -4,10 +4,16 @@ import { dirname, join } from 'path';
 import { mkdirSync } from 'fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const dataDir = join(__dirname, '..', '..', 'data');
-mkdirSync(dataDir, { recursive: true });
 
-const db = new Database(join(dataDir, 'bilanmedical.db'));
+// En mode Electron, DB_PATH pointe vers un dossier userData persistant.
+// En mode développement, on utilise le dossier data/ local au projet.
+const dbPath = process.env.DB_PATH
+  ? process.env.DB_PATH
+  : join(__dirname, '..', '..', 'data', 'bilanmedical.db');
+
+mkdirSync(dirname(dbPath), { recursive: true });
+
+const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 

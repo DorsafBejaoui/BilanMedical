@@ -1,0 +1,55 @@
+appId: com.dorsafbejaoui.suivi-ma-sante
+productName: Suivi Ma Santé
+copyright: "Copyright © 2024 Dorsaf Bejaoui"
+
+# Dossier de sortie de l'installeur
+directories:
+  output: dist-electron
+
+# Fichiers à inclure dans l'archive asar
+# Les node_modules de production (listés dans package.json > dependencies) sont
+# automatiquement ajoutés par electron-builder depuis le répertoire racine.
+files:
+  - electron/main.cjs
+  - server/src/**
+  - client/dist/**
+  - package.json
+  - "!server/node_modules/**"
+  - "!client/node_modules/**"
+  - "!client/src/**"
+  - "!scripts/**"
+  - "!data/**"
+  - "!dist-electron/**"
+
+# better-sqlite3 est un module natif (.node) : il doit être hors de l'asar
+asarUnpack:
+  - "node_modules/better-sqlite3/**"
+  - "node_modules/pdf-parse/**"
+
+# ──────────────── Windows ────────────────
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  # Placez un fichier electron/icon.ico (256×256) pour personnaliser l'icône.
+  # icon: electron/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "Suivi Ma Santé"
+
+# ──────────────── macOS ────────────────
+mac:
+  category: public.app-category.healthcare-fitness
+  target:
+    - target: dmg
+
+# ──────────────── Linux ────────────────
+linux:
+  target:
+    - target: AppImage
+  category: Medical

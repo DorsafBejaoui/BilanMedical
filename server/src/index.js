@@ -2,14 +2,20 @@ import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { existsSync } from 'fs';
 import db from './db.js';
 import { crudRouter } from './crud.js';
 import bloodRouter, { outOfRangeMarkers } from './blood.js';
 import { buildSynthesis } from './synthesis.js';
 import { buildContext } from './context.js';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+
 const app = express();
-app.use(cors());
+if (!isProd) app.use(cors());   // CORS inutile en prod (même origine localhost)
 app.use(express.json());
 
 // Modules CRUD
@@ -172,6 +178,21 @@ app.post('/api/radiology/import', radioUpload.single('file'), async (req, res) =
 });
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
+
+// En production (Electron), servir les fichiers statiques du client React.
+// client/dist/ se trouve deux niveaux au-dessus de server/src/
+if (isProd) {
+  const clientDist = join(__dirname, '..', '..', 'client', 'dist');
+  if (existsSync(clientDist)) {
+    app.use(express.static(clientDist));
+    // Toute route non-API renvoie index.html (React Router côté client)
+    app.get('*', (req, res) => {
+      if (!req.path.startsWith('/api')) {
+        res.sendFile(join(clientDist, 'index.html'));
+      }
+    });
+  }
+}
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`API BilanMedical sur http://localhost:${PORT}`));
