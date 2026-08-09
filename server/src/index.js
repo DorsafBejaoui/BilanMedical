@@ -17,7 +17,10 @@ const isProd = process.env.NODE_ENV === 'production';
 
 const app = express();
 if (!isProd) app.use(cors());   // CORS inutile en prod (même origine localhost)
-app.use(express.json());
+// Limite relevée : le texte extrait d'un PDF de rapport médical peut dépasser
+// la limite par défaut d'Express (100 Ko), ce qui ferait échouer silencieusement
+// l'enregistrement d'un rapport un peu long.
+app.use(express.json({ limit: '15mb' }));
 
 // Modules CRUD
 app.use(
