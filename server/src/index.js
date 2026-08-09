@@ -10,6 +10,7 @@ import { crudRouter } from './crud.js';
 import bloodRouter, { outOfRangeMarkers } from './blood.js';
 import { buildSynthesis } from './synthesis.js';
 import { buildContext } from './context.js';
+import { annotateReport, annotateReports } from './reportSummary.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isProd = process.env.NODE_ENV === 'production';
@@ -126,16 +127,17 @@ app.delete('/api/profile/activities/:id', (req, res) => {
 
 // Rapports de radiologie
 const radioUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
-const RADIO_FIELDS = ['date', 'exam_type', 'body_part', 'doctor', 'facility', 'conclusion', 'notes'];
+const RADIO_FIELDS = ['date', 'exam_type', 'body_part', 'doctor', 'facility', 'conclusion', 'notes', 'pdf_text', 'filename'];
 
 app.get('/api/radiology', (req, res) => {
-  res.json(db.prepare('SELECT * FROM radiology_reports ORDER BY date DESC').all());
+  const rows = db.prepare('SELECT * FROM radiology_reports ORDER BY date DESC').all();
+  res.json(annotateReports(rows));
 });
 
 app.get('/api/radiology/:id', (req, res) => {
   const row = db.prepare('SELECT * FROM radiology_reports WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Rapport introuvable' });
-  res.json(row);
+  res.json(annotateReport(row));
 });
 
 app.post('/api/radiology', (req, res) => {
@@ -146,7 +148,7 @@ app.post('/api/radiology', (req, res) => {
   const row = db.prepare(
     `INSERT INTO radiology_reports (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`
   ).run(...cols.map((c) => data[c]));
-  res.status(201).json(db.prepare('SELECT * FROM radiology_reports WHERE id = ?').get(row.lastInsertRowid));
+  res.status(201).json(annotateReport(db.prepare('SELECT * FROM radiology_reports WHERE id = ?').get(row.lastInsertRowid)));
 });
 
 app.put('/api/radiology/:id', (req, res) => {
@@ -158,7 +160,7 @@ app.put('/api/radiology/:id', (req, res) => {
     .run(...cols.map((c) => data[c]), req.params.id);
   const row = db.prepare('SELECT * FROM radiology_reports WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Rapport introuvable' });
-  res.json(row);
+  res.json(annotateReport(row));
 });
 
 app.delete('/api/radiology/:id', (req, res) => {

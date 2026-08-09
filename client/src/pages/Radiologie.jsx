@@ -97,6 +97,27 @@ export default function Radiologie() {
                   <button className="icon-btn danger" onClick={() => remove(r.id)}>🗑</button>
                 </div>
               </div>
+              {r.summary && (
+                <div className="record-field report-summary">
+                  <strong>📝 Résumé</strong>
+                  <p>{r.summary}</p>
+                </div>
+              )}
+
+              {r.keyMessages?.length > 0 && (
+                <div className="record-field key-messages">
+                  <strong>🔑 Messages clés</strong>
+                  <ul className="key-message-list">
+                    {r.keyMessages.map((m, i) => (
+                      <li key={i} className={`key-message key-message-${m.level}`}>
+                        <span className="key-message-icon">{m.icon}</span>
+                        <span>{m.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {r.conclusion && (
                 <div className="record-field">
                   <strong>Conclusion</strong>

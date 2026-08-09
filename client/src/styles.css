@@ -240,6 +240,35 @@ body {
   color: var(--muted);
 }
 
+/* Résumé automatique d'un rapport médical */
+.report-summary p {
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* Messages clés extraits d'un rapport médical */
+.key-message-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.key-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  border-left: 3px solid var(--border);
+}
+.key-message-icon { flex-shrink: 0; }
+.key-message-info { background: #f0fdf4; border-left-color: #22c55e; color: #14532d; }
+.key-message-warn { background: #fffbeb; border-left-color: #f59e0b; color: #78350f; }
+.key-message-urgent { background: #fef2f2; border-left-color: #ef4444; color: #7f1d1d; }
+
 /* Profil */
 .checkbox { flex-direction: row !important; align-items: center; gap: 8px !important; font-weight: 500 !important; }
 .checkbox input { width: auto; }
