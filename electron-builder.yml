@@ -21,10 +21,16 @@ files:
   - "!data/**"
   - "!dist-electron/**"
 
-# better-sqlite3 est un module natif (.node) : il doit être hors de l'asar
+# Modules natifs (.node) ou nécessitant un accès disque direct (workers,
+# fichiers binaires wasm/traineddata) : doivent être hors de l'asar.
 asarUnpack:
   - "node_modules/better-sqlite3/**"
   - "node_modules/pdf-parse/**"
+  - "node_modules/@napi-rs/canvas/**"      # module natif de rendu (rasterisation PDF pour l'OCR)
+  - "node_modules/pdfjs-dist/**"           # rendu des pages PDF
+  - "node_modules/tesseract.js/**"         # OCR : charge des workers depuis le disque
+  - "node_modules/tesseract.js-core/**"    # binaire wasm de Tesseract
+  - "node_modules/@tesseract.js-data/**"   # données de langue française (lues en fichier)
 
 # ──────────────── Windows ────────────────
 win:

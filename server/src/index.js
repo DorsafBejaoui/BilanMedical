@@ -11,6 +11,11 @@ import bloodRouter, { outOfRangeMarkers } from './blood.js';
 import { buildSynthesis } from './synthesis.js';
 import { buildContext } from './context.js';
 import { annotateReport, annotateReports } from './reportSummary.js';
+import { ocrPdf } from './ocr.js';
+
+// En dessous de ce nombre de caractères utiles, un PDF est considéré comme un
+// scan (image) sans couche de texte exploitable → on bascule sur l'OCR.
+const MIN_NATIVE_TEXT_LENGTH = 20;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isProd = process.env.NODE_ENV === 'production';
@@ -173,13 +178,38 @@ app.delete('/api/radiology/:id', (req, res) => {
 
 app.post('/api/radiology/import', radioUpload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Aucun fichier fourni' });
+
+  let text = '';
   try {
     const parsed = await pdfParse(req.file.buffer);
-    const text = parsed.text || '';
-    res.json({ pdf_text: text, filename: req.file.originalname });
-  } catch (e) {
-    res.status(422).json({ error: `Impossible de lire le PDF : ${e.message}` });
+    text = (parsed.text || '').trim();
+  } catch {
+    // Structure PDF non conforme pour pdf-parse : on retente via l'OCR ci-dessous
+    // (le rendu image + Tesseract est plus tolérant que l'extraction de texte natif).
   }
+
+  let ocr = false;
+  let ocrInfo = null;
+
+  // Aucun texte natif exploitable détecté : le PDF est probablement un scan
+  // papier (ou illisible par pdf-parse) → on tente une reconnaissance de
+  // caractères (OCR) sur chaque page.
+  if (text.replace(/\s+/g, '').length < MIN_NATIVE_TEXT_LENGTH) {
+    try {
+      const result = await ocrPdf(req.file.buffer);
+      if (result.text) {
+        text = result.text;
+        ocr = true;
+        ocrInfo = { pageCount: result.pageCount, pagesProcessed: result.pagesProcessed, truncated: result.truncated };
+      }
+    } catch (e) {
+      if (!text) return res.status(422).json({ error: `Impossible de lire le PDF : ${e.message}` });
+    }
+  }
+
+  if (!text) return res.status(422).json({ error: 'Impossible de lire le PDF : aucun texte détecté (même après OCR)' });
+
+  res.json({ pdf_text: text, filename: req.file.originalname, ocr, ocrInfo });
 });
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));

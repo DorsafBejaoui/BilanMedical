@@ -20,6 +20,7 @@ export default function Radiologie() {
   const [editId, setEditId] = useState(null);
   const [expanded, setExpanded] = useState({});
   const [importing, setImporting] = useState(false);
+  const [ocrUsed, setOcrUsed] = useState(false);
   const [error, setError] = useState(null);
   const fileRef = useRef(null);
 
@@ -28,15 +29,17 @@ export default function Radiologie() {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const openNew = () => { setForm(emptyForm()); setEditId(null); setOpen(true); };
-  const openEdit = (r) => { setForm({ ...emptyForm(), ...r }); setEditId(r.id); setOpen(true); };
+  const openNew = () => { setForm(emptyForm()); setEditId(null); setOcrUsed(false); setOpen(true); };
+  const openEdit = (r) => { setForm({ ...emptyForm(), ...r }); setEditId(r.id); setOcrUsed(false); setOpen(true); };
 
   const handlePdfImport = async (file) => {
     if (!file) return;
     setImporting(true);
+    setOcrUsed(false);
     try {
       const result = await api.radiology.importPdf(file);
       setForm((f) => ({ ...f, pdf_text: result.pdf_text || '', filename: result.filename || file.name }));
+      setOcrUsed(!!result.ocr);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -175,6 +178,13 @@ export default function Radiologie() {
                 <span className="muted" style={{ marginLeft: 8, fontSize: 13 }}>
                   {form.filename}
                 </span>
+              )}
+              {ocrUsed && (
+                <p className="context-note" style={{ marginTop: 8 }}>
+                  🔎 Ce PDF semble être un scan (image) : le texte a été extrait par reconnaissance
+                  de caractères (OCR). Relisez-le ci-dessous et corrigez-le si besoin, la précision
+                  dépend de la qualité du scan.
+                </p>
               )}
             </div>
 

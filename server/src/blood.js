@@ -4,12 +4,17 @@ import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import db from './db.js';
 import { CATALOG } from './catalog.js';
 import { getInsight } from './insights.js';
+import { ocrPdf } from './ocr.js';
 
 const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10 Mo
 });
+
+// En dessous de ce nombre de caractères utiles, un PDF est considéré comme un
+// scan (image) sans couche de texte exploitable → on bascule sur l'OCR.
+const MIN_NATIVE_TEXT_LENGTH = 20;
 
 // Récupère un rapport complet avec ses résultats
 function getTest(id) {
@@ -387,15 +392,31 @@ router.post('/references/import', upload.single('file'), (req, res) => {
 // Import d'un PDF de laboratoire : renvoie un brouillon (date + résultats détectés)
 router.post('/import', upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
-  let text;
+
+  let text = '';
   try {
     const data = await pdfParse(req.file.buffer);
-    text = data.text || '';
+    text = (data.text || '').trim();
   } catch {
-    return res.status(400).json({ error: 'PDF illisible ou protégé' });
+    // Structure PDF non conforme pour pdf-parse : on retente via l'OCR ci-dessous.
   }
+
+  let ocr = false;
+
+  // Aucun texte natif exploitable détecté : le PDF est probablement un scan
+  // papier (ou illisible par pdf-parse) → on tente une reconnaissance de
+  // caractères (OCR) sur chaque page.
+  if (text.replace(/\s+/g, '').length < MIN_NATIVE_TEXT_LENGTH) {
+    try {
+      const result = await ocrPdf(req.file.buffer);
+      if (result.text) { text = result.text; ocr = true; }
+    } catch { /* on retombe sur le texte natif (éventuellement vide) si l'OCR échoue */ }
+  }
+
+  if (!text) return res.status(400).json({ error: 'PDF illisible ou protégé (même après OCR)' });
+
   const draft = extractFromText(text);
-  res.json({ ...draft, source: req.file.originalname });
+  res.json({ ...draft, source: req.file.originalname, ocr });
 });
 
 export default router;

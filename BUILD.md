@@ -45,6 +45,9 @@ Copiez le fichier `dist-electron/Suivi Ma Sante Setup 1.0.0.exe` sur le PC cible
 - La **base de données** est stockée dans `%APPDATA%\Suivi Ma Santé\bilanmedical.db`
   → elle **survit aux mises à jour** de l'application
 - Chaque PC a sa propre base de données vide au premier lancement
+- L'installeur est plus volumineux qu'avant (~80-100 Mo) car il embarque le moteur
+  d'OCR (Tesseract, français) utilisé pour lire les PDF scannés — 100% hors-ligne,
+  aucune connexion internet requise à l'usage
 
 ---
 

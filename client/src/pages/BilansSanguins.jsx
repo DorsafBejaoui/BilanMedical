@@ -118,10 +118,13 @@ export default function BilansSanguins() {
           : [emptyRow()],
       });
       setEditId(null);
+      const ocrNote = draft.ocr
+        ? " 🔎 Ce PDF semble être un scan : le texte a été lu par OCR, vérifiez bien les valeurs (la précision dépend de la qualité du scan)."
+        : '';
       setInfo(
-        draft.results.length
+        (draft.results.length
           ? `${draft.results.length} marqueur(s) détecté(s). Vérifiez les valeurs avant d'enregistrer.`
-          : "Aucun marqueur reconnu automatiquement. Saisissez-les manuellement."
+          : "Aucun marqueur reconnu automatiquement. Saisissez-les manuellement.") + ocrNote
       );
       setOpen(true);
     } catch (err) {
