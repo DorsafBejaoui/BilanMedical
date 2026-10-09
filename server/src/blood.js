@@ -187,45 +187,68 @@ function extractFromText(text) {
   }
   all.sort((a, b) => b.maxLen - a.maxLen);
 
-  // Texte de travail : chaque correspondance trouvée est « masquée » pour
-  // qu'un marqueur au nom plus court ne réutilise pas la même valeur.
+  // Texte de travail : chaque correspondance utilisée est « masquée » (nom +
+  // valeur + référence), pour qu'un marqueur au nom plus court ne réutilise
+  // pas la même valeur. On ne masque PAS le reste de la ligne : plusieurs
+  // marqueurs sont parfois regroupés sur une même ligne par l'extraction PDF.
   let work = normalize(flat);
   const found = new Map();
   for (const { theme, marker, aliases } of all) {
-    let done = false;
+    let matched = null;
     for (const alias of aliases) {
-      if (done) break;
+      if (matched) break;
       const esc = normalize(alias).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const nameRe = new RegExp(`\\b${esc}\\b`);
-      const nm = work.match(nameRe);
-      if (!nm) continue;
+      const nameRe = new RegExp(`\\b${esc}\\b`, 'g');
 
-      // On raisonne sur la ligne entière contenant le marqueur
-      const start = nm.index;
-      const lineStart = work.lastIndexOf('\n', start) + 1;
-      const nl = work.indexOf('\n', start);
-      const lineEnd = nl === -1 ? work.length : nl;
-      const afterName = work.slice(start + nm[0].length, lineEnd);
+      // On essaie toutes les occurrences du nom, pas seulement la première :
+      // une mention sans valeur (légende, titre de colonne…) ne doit pas
+      // empêcher de trouver le résultat réel plus loin dans le texte.
+      let nm;
+      while ((nm = nameRe.exec(work))) {
+        const start = nm.index;
+        const nameEnd = start + nm[0].length;
+        const lineEnd = (() => {
+          const nl = work.indexOf('\n', start);
+          return nl === -1 ? work.length : nl;
+        })();
+        const afterName = work.slice(nameEnd, lineEnd);
 
-      // La valeur usuelle est étiquetée "N:" → on sépare valeur (avant) et référence (après)
-      const nIdx = afterName.search(/\bn\s*:/);
-      const valuePart = nIdx >= 0 ? afterName.slice(0, nIdx) : afterName;
-      const refPart = nIdx >= 0 ? afterName.slice(nIdx) : afterName;
+        // La valeur usuelle est étiquetée "N:" → on sépare valeur (avant) et référence (après)
+        const nIdx = afterName.search(/\bn\s*:/);
+        const valuePart = nIdx >= 0 ? afterName.slice(0, nIdx) : afterName;
+        const refPart = nIdx >= 0 ? afterName.slice(nIdx) : afterName;
 
-      const vm = valuePart.match(FIRST_NUM_RE); // 1ère valeur autonome après le nom
-      if (!vm) continue; // nom trouvé mais pas de valeur exploitable → alias suivant
+        const vm = valuePart.match(FIRST_NUM_RE); // 1ère valeur autonome après le nom
+        if (!vm) continue; // cette occurrence n'a pas de valeur exploitable → occurrence suivante
 
-      const ref = parseRange(refPart); // référence "N:" si présente, sinon plage de la ligne
-      found.set(marker.name, {
-        theme, marker: marker.name, value: toNum(vm[1]),
-        unit: marker.unit,
-        // Référence lue sur le bilan, sinon repli sur le catalogue
-        ref_min: ref ? ref.ref_min : marker.min,
-        ref_max: ref ? ref.ref_max : marker.max,
-      });
-      // Masque toute la ligne pour qu'un autre marqueur n'y repioche pas de nombre
-      work = work.slice(0, lineStart) + ' '.repeat(lineEnd - lineStart) + work.slice(lineEnd);
-      done = true;
+        const ref = parseRange(refPart); // référence "N:" si présente, sinon plage de la ligne
+
+        // Ne masque que ce qui vient d'être consommé (nom + valeur + référence
+        // éventuelle), pas toute la ligne : un autre marqueur peut suivre.
+        let consumedEnd = nameEnd + vm.index + vm[0].length;
+        if (nIdx >= 0) {
+          const refMatch = refPart.match(RANGE_RE) || refPart.match(LT_RE) || refPart.match(GT_RE);
+          if (refMatch) consumedEnd = Math.max(consumedEnd, nameEnd + nIdx + refMatch.index + refMatch[0].length);
+        }
+
+        matched = {
+          result: {
+            theme, marker: marker.name, value: toNum(vm[1]),
+            unit: marker.unit,
+            // Référence lue sur le bilan, sinon repli sur le catalogue
+            ref_min: ref ? ref.ref_min : marker.min,
+            ref_max: ref ? ref.ref_max : marker.max,
+          },
+          start,
+          consumedEnd,
+        };
+        break;
+      }
+    }
+    if (matched) {
+      found.set(marker.name, matched.result);
+      const { start, consumedEnd } = matched;
+      work = work.slice(0, start) + ' '.repeat(consumedEnd - start) + work.slice(consumedEnd);
     }
   }
 
