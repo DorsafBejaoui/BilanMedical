@@ -307,6 +307,8 @@ body {
   stroke-linejoin: round;
 }
 .refchart .value-label.out { fill: var(--danger); }
+.refchart .axis-line { stroke: var(--border); stroke-width: 1; }
+.refchart .date-label { font-size: 8px; fill: var(--muted); }
 
 /* Impression / export PDF */
 .print-only { display: none; }

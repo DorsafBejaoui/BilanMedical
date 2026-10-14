@@ -5,6 +5,9 @@ export default function RefChart({ data, refMin, refMax, unit, width = 260, heig
   const padX = 8;
   const padY = 10;
   const labelPad = 14; // espace réservé en haut pour les étiquettes de valeur
+  const axisPad = 36; // espace réservé en bas pour les dates (verticales)
+  const totalHeight = height + axisPad;
+
   const values = data.map((d) => d.value);
   let lo = Math.min(...values);
   let hi = Math.max(...values);
@@ -28,12 +31,24 @@ export default function RefChart({ data, refMin, refMax, unit, width = 260, heig
   // Formatage court de la valeur affichée au-dessus de chaque point
   const fmt = (v) => (Number.isInteger(v) ? v : Math.round(v * 100) / 100);
 
+  // Date au format jj/mm/aa, affichée verticalement sous l'axe
+  const fmtDate = (iso) => {
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yy = String(d.getFullYear()).slice(-2);
+    return `${dd}/${mm}/${yy}`;
+  };
+  const axisY = totalHeight - 4; // ancre basse des étiquettes de date
+
   return (
-    <svg className="refchart" viewBox={`0 0 ${width} ${height}`} width="100%" height={height}>
+    <svg className="refchart" viewBox={`0 0 ${width} ${totalHeight}`} width="100%" height={totalHeight}>
       {(refMin != null || refMax != null) && (
         <rect x="0" y={bandTop} width={width} height={Math.max(0, bandBottom - bandTop)} className="ref-band" />
       )}
       {data.length > 1 && <polyline className="line" points={points} fill="none" />}
+      <line x1="0" y1={height} x2={width} y2={height} className="axis-line" />
       {data.map((d, i) => {
         const cy = y(d.value);
         // Si le point est trop proche du haut, l'étiquette passe en dessous pour rester visible
@@ -45,6 +60,15 @@ export default function RefChart({ data, refMin, refMax, unit, width = 260, heig
             </circle>
             <text x={x(i)} y={labelY} textAnchor="middle" className={isOut(d.value) ? 'value-label out' : 'value-label'}>
               {fmt(d.value)}
+            </text>
+            <text
+              x={x(i)}
+              y={axisY}
+              textAnchor="end"
+              transform={`rotate(90 ${x(i)} ${axisY})`}
+              className="date-label"
+            >
+              {fmtDate(d.date)}
             </text>
           </g>
         );
