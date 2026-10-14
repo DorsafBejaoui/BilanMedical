@@ -4,6 +4,7 @@ export default function RefChart({ data, refMin, refMax, unit, width = 260, heig
 
   const padX = 8;
   const padY = 10;
+  const labelPad = 14; // espace réservé en haut pour les étiquettes de valeur
   const values = data.map((d) => d.value);
   let lo = Math.min(...values);
   let hi = Math.max(...values);
@@ -15,7 +16,7 @@ export default function RefChart({ data, refMin, refMax, unit, width = 260, heig
   const range = hi - lo || 1;
 
   const x = (i) => padX + (data.length === 1 ? width / 2 - padX : (i / (data.length - 1)) * (width - 2 * padX));
-  const y = (v) => height - padY - ((v - lo) / range) * (height - 2 * padY);
+  const y = (v) => height - padY - ((v - lo) / range) * (height - 2 * padY - labelPad) ;
 
   // Zone de référence (rectangle ombré)
   const bandTop = refMax != null ? y(refMax) : padY;
@@ -24,17 +25,30 @@ export default function RefChart({ data, refMin, refMax, unit, width = 260, heig
   const isOut = (v) => (refMin != null && v < refMin) || (refMax != null && v > refMax);
   const points = data.map((d, i) => `${x(i)},${y(d.value)}`).join(' ');
 
+  // Formatage court de la valeur affichée au-dessus de chaque point
+  const fmt = (v) => (Number.isInteger(v) ? v : Math.round(v * 100) / 100);
+
   return (
     <svg className="refchart" viewBox={`0 0 ${width} ${height}`} width="100%" height={height}>
       {(refMin != null || refMax != null) && (
         <rect x="0" y={bandTop} width={width} height={Math.max(0, bandBottom - bandTop)} className="ref-band" />
       )}
       {data.length > 1 && <polyline className="line" points={points} fill="none" />}
-      {data.map((d, i) => (
-        <circle key={i} cx={x(i)} cy={y(d.value)} r="3.5" className={isOut(d.value) ? 'dot out' : 'dot'}>
-          <title>{`${new Date(d.date).toLocaleDateString('fr-FR')} : ${d.value} ${unit || ''}`}</title>
-        </circle>
-      ))}
+      {data.map((d, i) => {
+        const cy = y(d.value);
+        // Si le point est trop proche du haut, l'étiquette passe en dessous pour rester visible
+        const labelY = cy - 11 < 4 ? cy + 14 : cy - 11;
+        return (
+          <g key={i}>
+            <circle cx={x(i)} cy={cy} r="3.5" className={isOut(d.value) ? 'dot out' : 'dot'}>
+              <title>{`${new Date(d.date).toLocaleDateString('fr-FR')} : ${d.value} ${unit || ''}`}</title>
+            </circle>
+            <text x={x(i)} y={labelY} textAnchor="middle" className={isOut(d.value) ? 'value-label out' : 'value-label'}>
+              {fmt(d.value)}
+            </text>
+          </g>
+        );
+      })}
     </svg>
   );
 }

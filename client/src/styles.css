@@ -297,6 +297,16 @@ body {
 .refchart .line { stroke: var(--primary); stroke-width: 2; }
 .refchart .dot { fill: var(--primary); }
 .refchart .dot.out { fill: var(--danger); }
+.refchart .value-label {
+  font-size: 9px;
+  fill: var(--muted);
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.refchart .value-label.out { fill: var(--danger); }
 
 /* Impression / export PDF */
 .print-only { display: none; }
