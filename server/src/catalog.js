@@ -33,7 +33,6 @@ export const CATALOG = [
       { name: 'TSH', unit: 'mUI/L', min: 0.4, max: 4.0, aliases: ['tsh us', 'thyreostimuline', 'tsh ultrasensible'] },
       { name: 'T4 libre (FT4)', unit: 'pmol/L', min: 9, max: 19, aliases: ['T4L', 'thyroxine libre', 't4 libre'] },
       { name: 'T3 libre (FT3)', unit: 'pmol/L', min: 3.1, max: 6.8, aliases: ['T3L', 't3 libre'] },
-      { name: 'Anticorps anti-TPO', unit: 'UI/mL', min: null, max: 34, aliases: ['anti tpo', 'anti-tpo', 'anticorps anti thyroperoxydase', 'ATPO'] },
     ],
   },
   {
@@ -150,6 +149,19 @@ export const CATALOG = [
       { name: 'Graisse viscérale (niveau)', unit: '', min: null, max: 12, aliases: ['graisse viscerale', 'visceral fat', 'indice graisse viscerale', 'niveau graisse viscerale'] },
       { name: 'Âge métabolique', unit: 'ans', min: null, max: null, aliases: ['age metabolique', 'metabolic age'] },
       { name: 'Masse corporelle maigre (kg)', unit: 'kg', min: null, max: null, aliases: ['poids maigre', 'free fat mass', 'ffm'] },
+    ],
+  },
+  {
+    theme: 'Auto-anticorps',
+    markers: [
+      { name: 'Anticorps anti-TPO', unit: 'UI/mL', min: null, max: 34, aliases: ['anti tpo', 'anti-tpo', 'anti peroxydase', 'anti-peroxydase', 'antiperoxydase', 'anticorps anti thyroperoxydase', 'ATPO'] },
+      { name: 'Anticorps anti-thyroglobuline', unit: 'UI/mL', min: null, max: 40, aliases: ['anti thyroglobuline', 'anti-tg', 'anticorps anti tg', 'ATG'] },
+      { name: 'Anticorps anti-nucléaires (AAN)', unit: '', min: null, max: null, aliases: ['anticorps antinucleaires', 'AAN', 'ANA', 'facteurs antinucleaires', 'FAN'] },
+      { name: 'Facteur rhumatoïde (FR)', unit: 'UI/mL', min: null, max: 14, aliases: ['facteur rhumatoide', 'FR', 'rheumatoid factor', 'latex waaler rose'] },
+      { name: 'Anticorps anti-CCP', unit: 'UI/mL', min: null, max: 5, aliases: ['anti ccp', 'anti-ccp', 'peptides cycliques citrullines', 'ACPA'] },
+      { name: 'Anticorps anti-transglutaminase (IgA)', unit: 'UI/mL', min: null, max: 10, aliases: ['anti transglutaminase', 'anti-ttg', 'ttg iga', 'transglutaminase tissulaire'] },
+      { name: 'Anticorps anti-mitochondries (AMA)', unit: '', min: null, max: null, aliases: ['anti mitochondries', 'anticorps antimitochondries', 'AMA'] },
+      { name: 'Anticorps anti-muscle lisse (ASMA)', unit: '', min: null, max: null, aliases: ['anti muscle lisse', 'anticorps anti muscle lisse', 'ASMA'] },
     ],
   },
 ];
