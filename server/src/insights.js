@@ -188,6 +188,11 @@ const INSIGHTS = {
   'Âge métabolique': {
     eleve: { level: 'info', message: "Âge métabolique supérieur à votre âge réel : indique que votre métabolisme basal est moins efficace que la moyenne. L'entraînement musculaire et une alimentation adaptée peuvent l'améliorer progressivement." },
   },
+
+  // --- Digestif -------------------------------------------------------------
+  'Calprotectine fécale': {
+    eleve: { level: 'warn', message: "Calprotectine fécale élevée : évoque une inflammation de l'intestin (maladie inflammatoire chronique, infection…) plutôt qu'un trouble fonctionnel. Un avis gastro-entérologique est recommandé pour en préciser la cause, surtout en cas de symptômes digestifs persistants." },
+  },
 };
 
 const FALLBACK = {

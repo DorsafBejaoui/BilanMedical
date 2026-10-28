@@ -164,4 +164,10 @@ export const CATALOG = [
       { name: 'Anticorps anti-muscle lisse (ASMA)', unit: '', min: null, max: null, aliases: ['anti muscle lisse', 'anticorps anti muscle lisse', 'ASMA'] },
     ],
   },
+  {
+    theme: 'Digestif',
+    markers: [
+      { name: 'Calprotectine fécale', unit: 'µg/g', min: null, max: 50, aliases: ['calprotectine', 'calprotectine fecale', 'fecal calprotectin', 'CF'] },
+    ],
+  },
 ];
